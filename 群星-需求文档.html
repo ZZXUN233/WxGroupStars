@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>《群星闪耀》产品需求文档 · PRD</title>
+<style>
+  :root {
+    --ink: #1a2233;
+    --ink-2: #566075;
+    --ink-3: #8b94a9;
+    --brand: #4f46e5;
+    --brand-deep: #3b34c9;
+    --brand-soft: #eef0fd;
+    --brand-border: #d9dcfb;
+    --gold: #b8860b;
+    --gold-soft: #faf3e3;
+    --gold-border: #ecd9ac;
+    --green: #0e9f6e;
+    --green-soft: #e6f6f0;
+    --bg: #f4f5fa;
+    --card: #ffffff;
+    --border: #e7e9f2;
+    --red: #d64545;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(26,34,51,.05), 0 4px 16px rgba(26,34,51,.06);
+    --shadow-lg: 0 2px 4px rgba(26,34,51,.06), 0 12px 32px rgba(26,34,51,.10);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  .layout { display: grid; grid-template-columns: 264px minmax(0, 1fr); }
+
+  /* ============ 侧边栏目录 ============ */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 24px 18px 40px;
+  }
+
+  .sidebar-brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 8px 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-brand .logo {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--brand), #7c3aed);
+    display: grid; place-items: center; color: #fff; flex-shrink: 0;
+  }
+  .sidebar-brand b { font-size: 15px; display: block; line-height: 1.3; }
+  .sidebar-brand span { font-size: 11px; color: var(--ink-3); }
+
+  .toc { list-style: none; font-size: 13.5px; }
+  .toc a {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 7px 10px; border-radius: 8px;
+    color: var(--ink-2); text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: background .15s, color .15s;
+  }
+  .toc a .num { font-variant-numeric: tabular-nums; color: var(--ink-3); font-size: 11.5px; }
+  .toc a:hover { background: var(--bg); color: var(--ink); }
+  .toc a.active {
+    background: var(--brand-soft); color: var(--brand);
+    font-weight: 600; border-left-color: var(--brand);
+  }
+  .toc li.sub { padding-left: 22px; }
+  .toc li.sub a { padding: 5px 10px; font-size: 13px; }
+
+  .sidebar-toggle { display: none; }
+
+  /* ============ 主内容 ============ */
+  .main { min-width: 0; padding: 0 28px 80px; }
+  .main-inner { max-width: 880px; margin: 0 auto; }
+
+  /* ============ Hero 封面 ============ */
+  .hero {
+    position: relative;
+    background: linear-gradient(160deg, #2b2a7a 0%, #4f46e5 55%, #6d5ae8 100%);
+    color: #fff;
+    border-radius: 0 0 24px 24px;
+    margin: 0 -28px 0;
+    padding: 64px 28px 48px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(2px 2px at 12% 28%, rgba(255,255,255,.9), transparent),
+      radial-gradient(1.5px 1.5px at 28% 68%, rgba(255,255,255,.8), transparent),
+      radial-gradient(2px 2px at 44% 18%, rgba(255,255,255,.85), transparent),
+      radial-gradient(1.5px 1.5px at 60% 58%, rgba(255,255,255,.7), transparent),
+      radial-gradient(2px 2px at 76% 32%, rgba(255,255,255,.85), transparent),
+      radial-gradient(1.5px 1.5px at 88% 72%, rgba(255,255,255,.7), transparent),
+      radial-gradient(2px 2px at 66% 84%, rgba(255,255,255,.8), transparent);
+  }
+  .hero::after {
+    content: ""; position: absolute;
+    width: 420px; height: 420px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.10), transparent 70%);
+    top: -140px; right: -100px;
+  }
+  .hero-inner { position: relative; z-index: 1; max-width: 760px; }
+
+  .hero-badge {
+    display: inline-block; font-size: 12px; letter-spacing: .12em;
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.35);
+    margin-bottom: 22px;
+  }
+  .hero h1 { font-size: 46px; font-weight: 800; letter-spacing: .02em; line-height: 1.15; }
+  .hero h1 .star { color: #ffd97a; }
+  .hero-sub { margin-top: 10px; font-size: 16px; opacity: .92; }
+  .hero-quote {
+    margin-top: 24px; padding: 16px 20px; border-left: 3px solid #ffd97a;
+    background: rgba(255,255,255,.10); border-radius: 0 12px 12px 0;
+    font-size: 15.5px; line-height: 1.7;
+  }
+  .hero-meta {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px;
+  }
+  .hero-meta span {
+    font-size: 12.5px; padding: 6px 14px; border-radius: 8px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25);
+  }
+  .hero-meta b { font-weight: 600; }
+
+  /* 文档信息条 */
+  .doc-meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; margin: 26px 0 8px;
+    box-shadow: var(--shadow);
+  }
+  .doc-meta div { background: var(--card); padding: 12px 16px; }
+  .doc-meta dt { font-size: 11px; color: var(--ink-3); letter-spacing: .05em; }
+  .doc-meta dd { font-size: 13.5px; font-weight: 600; margin-top: 2px; }
+
+  /* ============ Section 与卡片 ============ */
+  section { margin-top: 44px; }
+  section > .card { padding: 0; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 26px 30px;
+    margin-top: 18px;
+  }
+  .card:first-child { margin-top: 0; }
+
+  .sec-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 6px; }
+  .sec-num {
+    flex-shrink: 0;
+    width: 42px; height: 42px; border-radius: 12px;
+    background: var(--brand-soft); color: var(--brand);
+    display: grid; place-items: center;
+    font-size: 15px; font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .sec-head h2 { font-size: 24px; font-weight: 800; letter-spacing: .01em; }
+  .sec-lead { color: var(--ink-2); font-size: 14.5px; margin: 4px 0 0 58px; }
+
+  h3 { font-size: 16.5px; font-weight: 700; margin: 22px 0 8px; display: flex; align-items: center; gap: 8px; }
+  h3 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); flex-shrink: 0; }
+  .card > h3:first-child { margin-top: 0; }
+
+  p { color: var(--ink-2); }
+  b, strong { color: var(--ink); }
+  ul, ol { padding-left: 20px; color: var(--ink-2); }
+  li { margin: 4px 0; }
+  li::marker { color: var(--brand); }
+  .lead-quote {
+    border-left: 3px solid var(--brand);
+    background: var(--brand-soft);
+    padding: 16px 20px; border-radius: 0 12px 12px 0;
+    font-size: 15.5px; font-weight: 600; color: var(--ink);
+  }
+  .lead-quote.gold { border-left-color: var(--gold); background: var(--gold-soft); }
+
+  /* ============ 组件：标签 chips ============ */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .chip {
+    font-size: 13px; padding: 5px 13px; border-radius: 999px;
+    background: var(--brand-soft); color: var(--brand);
+    border: 1px solid var(--brand-border);
+    font-weight: 500;
+  }
+  .chip.gold { background: var(--gold-soft); color: var(--gold); border-color: var(--gold-border); }
+  .chip.green { background: var(--green-soft); color: var(--green); border-color: #bfe8d9; }
+  .chip.plain { background: var(--bg); color: var(--ink-2); border-color: var(--border); }
+
+  /* ============ 组件：网格 ============ */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 14px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 14px; }
+
+  .mini-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .mini-card .icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--brand-soft); color: var(--brand);
+    display: grid; place-items: center; margin-bottom: 10px;
+  }
+  .mini-card h4 { font-size: 14.5px; font-weight: 700; margin-bottom: 4px; }
+  .mini-card p { font-size: 13px; color: var(--ink-3); }
+
+  .tone-red .icon { background: #fdecec; color: var(--red); }
+  .tone-green .icon { background: var(--green-soft); color: var(--green); }
+  .tone-gold .icon { background: var(--gold-soft); color: var(--gold); }
+  .tone-purple .icon { background: #f3ecfe; color: #7c3aed; }
+  .tone-cyan .icon { background: #e4f6fb; color: #0e7490; }
+
+  /* ============ 组件：流程步骤条 ============ */
+  .stepper { display: flex; align-items: stretch; margin-top: 16px; }
+  .step { flex: 1; position: relative; text-align: center; padding: 0 6px; }
+  .step:not(:last-child)::after {
+    content: ""; position: absolute; top: 19px; left: calc(50% + 34px);
+    width: calc(100% - 68px); height: 2px;
+    background: var(--brand-border);
+  }
+  .step-dot {
+    width: 38px; height: 38px; margin: 0 auto; border-radius: 50%;
+    background: var(--brand); color: #fff; font-weight: 700; font-size: 15px;
+    display: grid; place-items: center; position: relative; z-index: 1;
+    box-shadow: 0 0 0 4px var(--brand-soft);
+  }
+  .step b { display: block; margin-top: 10px; font-size: 13.5px; }
+  .step span { display: block; font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+
+  /* 竖向流程（多行文字） */
+  .vflow { display: flex; flex-direction: column; gap: 0; margin-top: 14px; }
+  .vflow .vstep { display: flex; align-items: center; gap: 14px; position: relative; padding-bottom: 18px; }
+  .vflow .vstep:not(:last-child)::before {
+    content: ""; position: absolute; left: 15px; top: 34px; bottom: 2px;
+    width: 2px; background: var(--brand-border);
+  }
+  .vstep .dot {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    background: var(--brand); color: #fff; font-size: 13px; font-weight: 700;
+    display: grid; place-items: center; position: relative; z-index: 1;
+  }
+  .vstep.gold .dot { background: var(--gold); }
+  .vstep p { font-size: 14px; }
+
+  /* ============ 组件：表格 ============ */
+  table.tbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px; }
+  .tbl th {
+    text-align: left; padding: 10px 14px; background: var(--bg);
+    color: var(--ink); font-weight: 600; font-size: 12.5px;
+    letter-spacing: .02em; border-bottom: 1px solid var(--border);
+  }
+  .tbl td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--ink-2); vertical-align: top; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl td b { color: var(--ink); }
+  .tbl .tag-avoid { font-size: 12px; color: var(--ink-3); }
+  .tbl tr:hover td { background: #fafbfe; }
+
+  .tbl-2 td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; width: 130px; }
+
+  /* ============ 组件：手机模拟 ============ */
+  .phone {
+    width: 300px; margin: 14px auto; background: #fff;
+    border: 9px solid #1c2333; border-radius: 34px;
+    box-shadow: var(--shadow-lg); overflow: hidden;
+  }
+  .phone-bar { background: #fff; padding: 12px 16px 4px; font-size: 12px; font-weight: 600; color: var(--ink); }
+  .phone-screen { padding: 4px 16px 18px; font-size: 13px; }
+  .phone-title { display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14px; padding: 4px 0 10px; color: var(--ink); }
+  .work-item {
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 8px;
+  }
+  .work-item .w-author { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); }
+  .work-item .avatar { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), #7c3aed); color: #fff; font-size: 10px; display: grid; place-items: center; }
+  .work-item .w-title { font-weight: 700; font-size: 13.5px; margin-top: 6px; color: var(--ink); }
+  .work-item .w-meta { font-size: 11px; color: var(--ink-3); margin-top: 4px; display: flex; gap: 10px; }
+  .stat-row { display: flex; gap: 10px; margin-top: 10px; }
+  .stat-box { flex: 1; text-align: center; background: var(--bg); border-radius: 10px; padding: 8px 4px; }
+  .stat-box b { display: block; font-size: 16px; color: var(--brand); }
+  .stat-box span { font-size: 11px; color: var(--ink-3); }
+
+  /* 微信卡片模拟 */
+  .wx-card {
+    background: var(--bg); border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border); max-width: 320px; margin: 12px auto 0;
+  }
+  .wx-card .wx-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: #fff; }
+  .wx-card .wx-head .app-logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--brand), #7c3aed); color: #fff; display: grid; place-items: center; font-size: 13px; }
+  .wx-card .wx-head b { font-size: 13px; }
+  .wx-card .wx-body { padding: 12px 14px; }
+  .wx-card .wx-title { font-weight: 700; font-size: 14.5px; color: var(--ink); }
+  .wx-card .wx-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+  .wx-card .wx-type { display: inline-block; font-size: 11px; color: var(--brand); background: var(--brand-soft); border: 1px solid var(--brand-border); padding: 2px 8px; border-radius: 999px; margin-top: 6px; }
+  .wx-card .wx-foot { border-top: 1px solid var(--border); padding: 9px 14px; font-size: 12.5px; color: var(--brand); font-weight: 600; display: flex; justify-content: space-between; }
+
+  /* 分享图设计稿 */
+  .share-art { display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+  .share-art .art { width: 180px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .art-cover { height: 110px; display: flex; flex-direction: column; justify-content: flex-end; padding: 12px; }
+  .art.poetry .art-cover { background: linear-gradient(160deg, #f6efe0, #e8dcc3); color: #4a3d20; }
+  .art.photo .art-cover { background: linear-gradient(160deg, #dbeafe, #7aa2e3); color: #fff; }
+  .art.tech .art-cover { background: linear-gradient(160deg, #e9e5fb, #8b83e8); color: #fff; }
+  .art-caption { padding: 10px 12px; font-size: 12px; color: var(--ink-3); background: #fff; }
+
+  /* ============ 数据模型树 ============ */
+  .tree { font-size: 13.5px; margin-top: 12px; }
+  .tree .node { display: inline-flex; align-items: center; gap: 8px; background: var(--brand-soft); color: var(--brand); font-weight: 600; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--brand-border); }
+  .tree .node.root { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .tree ul { list-style: none; padding-left: 24px; margin-top: 10px; position: relative; }
+  .tree ul::before { content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--brand-border); }
+  .tree li { position: relative; padding: 5px 0 5px 12px; margin: 0; }
+  .tree li::before { content: ""; position: absolute; left: 8px; top: 50%; width: 12px; height: 2px; background: var(--brand-border); transform: translateY(-50%); }
+  .tree li::marker { content: none; }
+  .tree .leaf { display: inline-flex; align-items: center; gap: 7px; background: var(--bg); padding: 4px 12px; border-radius: 8px; font-size: 13px; color: var(--ink-2); border: 1px solid var(--border); }
+  .tree .leaf small { color: var(--ink-3); font-size: 11px; }
+
+  /* ============ 路线图时间线 ============ */
+  .roadmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+  .roadmap .phase { border-radius: 14px; padding: 20px; border: 1px solid var(--border); background: var(--card); position: relative; box-shadow: var(--shadow); }
+  .phase .ph-badge { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-bottom: 10px; }
+  .phase.v1 { border-top: 3px solid var(--green); }
+  .phase.v1 .ph-badge { background: var(--green-soft); color: var(--green); }
+  .phase.v2 { border-top: 3px solid var(--brand); }
+  .phase.v2 .ph-badge { background: var(--brand-soft); color: var(--brand); }
+  .phase.v3 { border-top: 3px solid var(--gold); }
+  .phase.v3 .ph-badge { background: var(--gold-soft); color: var(--gold); }
+  .phase h4 { font-size: 16px; font-weight: 800; }
+  .phase .ph-desc { font-size: 12.5px; color: var(--ink-3); margin: 2px 0 10px; }
+  .phase ul { font-size: 13.5px; }
+  .phase .must { color: var(--green); font-weight: 600; }
+
+  /* 总结对照 */
+  .who-box { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 16px; }
+  .who-box .side { background: var(--card); padding: 18px 22px; }
+  .who-box h4 { font-size: 13px; color: var(--ink-3); letter-spacing: .05em; margin-bottom: 8px; }
+  .who-box .items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .who-box .items span { font-size: 13.5px; font-weight: 600; background: var(--bg); border: 1px solid var(--border); padding: 4px 12px; border-radius: 8px; }
+
+  /* 结果对比标签 */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+  .tag-pill { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; background: var(--bg); border: 1px solid var(--border); padding: 8px 16px; border-radius: 10px; }
+  .tag-pill .x { color: var(--red); font-weight: 800; }
+  .tag-pill .ok { color: var(--green); font-weight: 800; }
+
+  /* 返回顶部 */
+  #toTop {
+    position: fixed; right: 26px; bottom: 26px;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--brand); color: #fff; border: none; cursor: pointer;
+    display: grid; place-items: center; font-size: 18px;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+    box-shadow: var(--shadow-lg); z-index: 50;
+  }
+  #toTop.show { opacity: 1; pointer-events: auto; }
+  #toTop:hover { transform: translateY(-3px); }
+
+  .footer { text-align: center; color: var(--ink-3); font-size: 12.5px; margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 1024px) {
+    .layout { display: block; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 280px; z-index: 40;
+      transform: translateX(-100%); transition: transform .25s ease;
+      box-shadow: var(--shadow-lg);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-toggle {
+      display: grid; place-items: center;
+      position: fixed; top: 16px; left: 16px; z-index: 45;
+      width: 42px; height: 42px; border-radius: 12px;
+      background: var(--brand); color: #fff; border: none; cursor: pointer;
+      box-shadow: var(--shadow-lg); font-size: 18px;
+    }
+    .hero { margin: 0; border-radius: 0 0 20px 20px; padding: 72px 22px 44px; }
+    .main { padding: 0 18px 60px; }
+    .sec-lead { margin-left: 0; }
+    .grid-4, .grid-5 { grid-template-columns: repeat(2, 1fr); }
+    .roadmap { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 34px; }
+    .stepper { flex-direction: column; gap: 16px; }
+    .step:not(:last-child)::after { display: none; }
+    .who-box { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="打开目录">☰</button>
+<button id="toTop" aria-label="返回顶部">↑</button>
+
+<div class="layout">
+  <!-- ================= 侧边栏 ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 6.3L21 9.2l-4.8 4.4 1.3 6.4L12 16.8 6.5 20l1.3-6.4L3 9.2l6.4-.9z"/></svg>
+      </div>
+      <div><b>群星闪耀</b><span>产品需求文档 PRD</span></div>
+    </div>
+    <ul class="toc" id="toc">
+      <li><a href="#overview"><span class="num">01</span>产品概述</a></li>
+      <li><a href="#positioning"><span class="num">02</span>产品定位</a></li>
+      <li><a href="#terms"><span class="num">03</span>核心术语</a></li>
+      <li><a href="#goals"><span class="num">04</span>产品目标</a></li>
+      <li><a href="#boundary"><span class="num">05</span>产品边界</a></li>
+      <li><a href="#workflow"><span class="num">06</span>核心业务流程</a></li>
+      <li><a href="#features"><span class="num">07</span>核心功能需求</a></li>
+      <li class="sub"><a href="#f-space"><span class="num">7.1</span>群空间</a></li>
+      <li class="sub"><a href="#f-publish"><span class="num">7.2</span>作品发布</a></li>
+      <li class="sub"><a href="#f-model"><span class="num">7.3</span>作品信息模型</a></li>
+      <li class="sub"><a href="#f-timeline"><span class="num">7.4</span>时间轴展示</a></li>
+      <li class="sub"><a href="#f-profile"><span class="num">7.5</span>作者主页 · 星轨</a></li>
+      <li class="sub"><a href="#f-search"><span class="num">7.6</span>分类检索与搜索</a></li>
+      <li class="sub"><a href="#f-interact"><span class="num">7.7</span>社区互动</a></li>
+      <li><a href="#wechat"><span class="num">08</span>微信生态交互设计</a></li>
+      <li><a href="#home"><span class="num">09</span>首页设计</a></li>
+      <li><a href="#growth"><span class="num">10</span>产品增长机制</a></li>
+      <li><a href="#ai"><span class="num">11</span>AI 增强方向</a></li>
+      <li><a href="#roadmap"><span class="num">12</span>MVP 版本规划</a></li>
+      <li><a href="#summary"><span class="num">13</span>核心价值总结</a></li>
+    </ul>
+  </aside>
+
+  <!-- ================= 主内容 ================= -->
+  <div class="main">
+    <div class="main-inner">
+
+      <!-- Hero -->
+      <header class="hero">
+        <div class="hero-inner">
+          <span class="hero-badge">产品需求文档 · PRD</span>
+          <h1>群星<span class="star">闪</span>耀</h1>
+          <p class="hero-sub">微信小程序 · 微信群作品沉淀社区</p>
+          <div class="hero-quote">让微信群中的每一次创作，都拥有长期保存、展示和交流的空间。</div>
+          <div class="hero-meta">
+            <span>版本 <b>V1.0</b></span>
+            <span>更新日期 <b>2026-08-05</b></span>
+            <span>状态 <b>MVP 规划中</b></span>
+            <span>载体 <b>微信小程序</b></span>
+          </div>
+        </div>
+      </header>
+
+      <dl class="doc-meta">
+        <div><dt>产品名称</dt><dd>群星闪耀（Group Stars）</dd></div>
+        <div><dt>产品定位</dt><dd>微信群创作者作品沉淀社区</dd></div>
+        <div><dt>平台</dt><dd>微信小程序</dd></div>
+        <div><dt>面向读者</dt><dd>产品 / 研发 / 设计</dd></div>
+      </dl>
+
+      <!-- ============ 01 产品概述 ============ -->
+      <section id="overview">
+        <div class="sec-head">
+          <div class="sec-num">01</div>
+          <h2>产品概述</h2>
+        </div>
+        <div class="card">
+          <h3><span class="dot"></span>产品背景</h3>
+          <p>微信群已经成为人与人之间交流的重要场景，大量用户会在群中分享原创内容：</p>
+          <div class="chips">
+            <span class="chip">原创文章</span><span class="chip">摄影作品</span><span class="chip">绘画作品</span>
+            <span class="chip">音乐作品</span><span class="chip">技术项目</span><span class="chip">思考观点</span>
+            <span class="chip">创意作品</span>
+          </div>
+
+          <h3><span class="dot"></span>但微信群的信息流模式存在天然缺陷</h3>
+          <div class="grid-4">
+            <div class="mini-card tone-red"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div><h4>内容被淹没</h4><p>好内容快速被新消息刷走</p></div>
+            <div class="mini-card tone-red"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+            </div><h4>难以再找到</h4><p>优秀作品无法回溯检索</p></div>
+            <div class="mini-card tone-red"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 21h16"/></svg>
+            </div><h4>缺少展示空间</h4><p>创作者没有长期主页</p></div>
+            <div class="mini-card tone-red"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v8H4v-8"/><path d="M8 6l4-3 4 3"/></svg>
+            </div><h4>创造力无法沉淀</h4><p>群体记忆随时间流失</p></div>
+          </div>
+
+          <h3><span class="dot"></span>解决方案</h3>
+          <div class="lead-quote gold">构建一个「属于微信群成员自己的作品社区」，让每一个群成员的创造，都成为群体记忆的一部分。</div>
+        </div>
+      </section>
+
+      <!-- ============ 02 产品定位 ============ -->
+      <section id="positioning">
+        <div class="sec-head">
+          <div class="sec-num">02</div>
+          <h2>产品定位</h2>
+        </div>
+        <div class="card">
+          <div class="lead-quote">《群星闪耀》是一款基于微信群关系的作品沉淀社区，让微信群中的每一次创作，都拥有长期保存、展示和交流的空间。</div>
+          <div class="grid-2">
+            <div class="mini-card tone-purple"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v8H4v-8"/><path d="M8 6l4-3 4 3"/></svg>
+            </div><h4>微信负责</h4><p>关系 · 传播 · 互动</p></div>
+            <div class="mini-card tone-gold"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 6.3L21 9.2l-4.8 4.4 1.3 6.4L12 16.8 6.5 20l1.3-6.4L3 9.2l6.4-.9z"/></svg>
+            </div><h4>群星闪耀负责</h4><p>记录 · 整理 · 展示 · 成长</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 03 核心术语 ============ -->
+      <section id="terms">
+        <div class="sec-head">
+          <div class="sec-num">03</div>
+          <h2>核心术语</h2>
+        </div>
+        <div class="sec-lead">统一产品与研发语言，避免歧义。左侧为规范用词，右侧为应避免的说法。</div>
+        <div class="card">
+          <table class="tbl">
+            <thead><tr><th style="width:130px">术语</th><th>定义</th><th style="width:170px">避免使用</th></tr></thead>
+            <tbody>
+              <tr><td><b>群空间</b> Group Space</td><td>一个微信群对应一个独立的作品空间，成员在此提交和浏览作品。</td><td class="tag-avoid">群 / 星圈 / 社区空间</td></tr>
+              <tr><td><b>作品</b> Work</td><td>用户在群空间中创作的、被系统沉淀的核心实体。本体只有标题、作者、内容/封面、类型、标签、发布时间，跨群一致。</td><td class="tag-avoid">内容 / 帖子 / 作品集</td></tr>
+              <tr><td><b>投影</b> Projection</td><td>作品在某个群空间中的"软链接"。可投影到多个群空间，每个投影独立持有该群的点赞、评论、收藏数；对投影的互动不影响作品本体。</td><td class="tag-avoid">软链接 / 投影条目 / 副本</td></tr>
+              <tr><td><b>成员</b> Member</td><td>加入某个群空间的用户，一个用户可属于多个群空间。</td><td class="tag-avoid">用户 / 群友 / 创作者</td></tr>
+              <tr><td><b>点赞</b> Like</td><td>成员对作品表达认可的动作，按作品聚合计数展示。</td><td class="tag-avoid">喜欢 / 赞 / 爱心</td></tr>
+              <tr><td><b>评论</b> Comment</td><td>成员对作品发表的意见，支持回复与 @用户。</td><td class="tag-avoid">留言 / 回复 / 讨论</td></tr>
+              <tr><td><b>收藏</b> Collect</td><td>成员将作品加入个人收藏的动作。</td><td class="tag-avoid">保存 / 书签 / 关注</td></tr>
+              <tr><td><b>星轨</b> Star Trail</td><td>作者个人的作品档案主页，展示其作品数量、分类分布与最近作品。</td><td class="tag-avoid">个人主页 / 作者页 / 档案</td></tr>
+              <tr><td><b>时间轴</b> Timeline</td><td>按时间展示群体创作历史的视图，支持今日 / 本周 / 本月 / 年度切片。</td><td class="tag-avoid">动态流 / 信息流 / 瀑布</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 04 产品目标 ============ -->
+      <section id="goals">
+        <div class="sec-head">
+          <div class="sec-num">04</div>
+          <h2>产品目标</h2>
+        </div>
+        <div class="card">
+          <h3><span class="dot"></span>核心目标</h3>
+          <div class="stepper">
+            <div class="step"><div class="step-dot">1</div><b>微信群</b><span>既有关系与内容场景</span></div>
+            <div class="step"><div class="step-dot">2</div><b>关系连接</b><span>将群关系引入社区</span></div>
+            <div class="step"><div class="step-dot">3</div><b>群星闪耀</b><span>作品沉淀社区</span></div>
+            <div class="step"><div class="step-dot">4</div><b>沉淀 · 互动 · 成长</b><span>作品沉淀、互动交流、成长记录</span></div>
+          </div>
+
+          <h3><span class="dot"></span>用户价值</h3>
+          <div class="grid-2">
+            <div class="mini-card tone-gold"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div><h4>对创作者</h4>
+              <ul><li>保存自己的作品</li><li>建立个人作品档案</li><li>获得群友反馈</li><li>展示个人成长轨迹</li></ul>
+            </div>
+            <div class="mini-card tone-cyan"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            </div><h4>对群体</h4>
+              <ul><li>保存群文化</li><li>发现成员价值</li><li>形成共同记忆</li></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 05 产品边界 ============ -->
+      <section id="boundary">
+        <div class="sec-head">
+          <div class="sec-num">05</div>
+          <h2>产品边界</h2>
+        </div>
+        <div class="card">
+          <h3><span class="dot"></span>受微信隐私限制，小程序无法</h3>
+          <div class="grid-3">
+            <div class="mini-card tone-red"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 21h16"/></svg>
+            </div><h4>自动读取聊天记录</h4><p>无法读取微信群历史消息</p></div>
+            <div class="mini-card tone-red"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
+            </div><h4>自动监听群消息</h4><p>无法感知群内实时动态</p></div>
+            <div class="mini-card tone-red"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+            </div><h4>自动抓取分享内容</h4><p>无法自动采集群友分享</p></div>
+          </div>
+          <h3><span class="dot"></span>因此采用的产品模式</h3>
+          <div class="lead-quote">用户主动提交作品 + 微信分享传播模式</div>
+        </div>
+      </section>
+
+      <!-- ============ 06 核心业务流程 ============ -->
+      <section id="workflow">
+        <div class="sec-head">
+          <div class="sec-num">06</div>
+          <h2>核心业务流程</h2>
+        </div>
+        <div class="card">
+          <h3><span class="dot"></span>创建群空间</h3>
+          <div class="stepper">
+            <div class="step"><div class="step-dot">1</div><b>打开小程序</b><span>微信授权登录</span></div>
+            <div class="step"><div class="step-dot">2</div><b>创建群空间</b><span>发起创建动作</span></div>
+            <div class="step"><div class="step-dot">3</div><b>填写群名称</b><span>确认空间信息</span></div>
+            <div class="step"><div class="step-dot">4</div><b>生成群星空间</b><span>空间即刻可用</span></div>
+            <div class="step"><div class="step-dot">5</div><b>分享邀请成员</b><span>分享到微信群</span></div>
+          </div>
+
+          <h3><span class="dot"></span>群空间示例</h3>
+          <div class="phone">
+            <div class="phone-bar">🌌 群星闪耀</div>
+            <div class="phone-screen">
+              <div class="phone-title"><span>AI创造交流群</span></div>
+              <div class="stat-row">
+                <div class="stat-box"><b>328</b><span>已有作品</span></div>
+                <div class="stat-box"><b>42</b><span>群成员</span></div>
+              </div>
+              <div class="phone-title" style="font-size:12.5px;color:var(--ink-3);justify-content:flex-start;padding-top:10px">最新作品</div>
+              <div class="work-item">
+                <div class="w-author"><span class="avatar">张</span>张三</div>
+                <div class="w-title">《AI时代的人类》</div>
+              </div>
+              <div class="work-item">
+                <div class="w-author"><span class="avatar">李</span>李四</div>
+                <div class="w-title">《机器人实验》</div>
+              </div>
+              <div class="work-item">
+                <div class="w-author"><span class="avatar">王</span>王五</div>
+                <div class="w-title">《摄影作品》</div>
+              </div>
+            </div>
+          </div>
+
+          <h3><span class="dot"></span>数据模型</h3>
+          <div class="tree">
+            <span class="node root">群空间 Group Space</span>
+            <ul>
+              <li><span class="leaf">成员 <small>Member</small></span></li>
+              <li><span class="leaf">作品 <small>Work · 可多投影</small></span></li>
+              <li><span class="leaf">评论 <small>Comment</small></span></li>
+              <li><span class="leaf">互动记录 <small>Like / Collect</small></span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 07 核心功能需求 ============ -->
+      <section id="features">
+        <div class="sec-head">
+          <div class="sec-num">07</div>
+          <h2>核心功能需求</h2>
+        </div>
+        <div class="sec-lead">七大核心功能模块：群空间、作品发布、信息模型、时间轴、星轨、检索与互动。</div>
+      </section>
+
+      <!-- 7.1 群空间 -->
+      <section id="f-space">
+        <h3><span class="dot"></span>7.1 群空间</h3>
+        <div class="card">
+          <p>每个微信群对应一个<b>独立的作品空间</b>。空间内聚合展示本群作品，成员在此提交与浏览，形成群体的内容沉淀。</p>
+          <div class="grid-2">
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            </div><h4>每群一空间</h4><p>一个微信群对应一个独立作品空间</p></div>
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
+            </div><h4>最新作品流</h4><p>空间首页展示群内最新作品</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7.2 作品发布 -->
+      <section id="f-publish">
+        <h3><span class="dot"></span>7.2 作品发布</h3>
+        <div class="card">
+          <p>支持<b>五种作品类型</b>，覆盖群内主流创作形式：</p>
+          <div class="grid-5">
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16"/><path d="M6 16V8l6-4 6 4v8"/></svg>
+            </div><h4>文字作品</h4><p>文章 · 诗歌 · 小说<br>随笔 · 观点</p></div>
+            <div class="mini-card tone-green"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-10 10"/></svg>
+            </div><h4>图片作品</h4><p>摄影 · 绘画<br>设计</p></div>
+            <div class="mini-card tone-cyan"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3z"/></svg>
+            </div><h4>音视频作品</h4><p>音乐 · 视频<br>配音</p></div>
+            <div class="mini-card tone-purple"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div><h4>技术作品</h4><p>代码 · 开源项目<br>技术方案</p></div>
+            <div class="mini-card tone-gold"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+            </div><h4>外部作品</h4><p>网站链接 · 博客<br>GitHub · 视频链接</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7.3 信息模型 -->
+      <section id="f-model">
+        <h3><span class="dot"></span>7.3 作品信息模型</h3>
+        <div class="card">
+          <p>作品以<b>「作品本体 + 群内投影」</b>的双层结构沉淀：本体跨群唯一，互动计数归属各群投影。</p>
+          <div class="grid-2">
+            <div class="mini-card"><h4 style="margin-bottom:8px">作品本体 <span style="font-size:11px;color:var(--ink-3);font-weight:400">Work</span></h4>
+              <table class="tbl tbl-2">
+                <tbody>
+                  <tr><td>id</td><td>作品唯一标识</td></tr>
+                  <tr><td>标题</td><td>作品名称</td></tr>
+                  <tr><td>作者</td><td>创作者（成员）</td></tr>
+                  <tr><td>作品类型</td><td>文字 / 图片 / 音视频 / 技术 / 外部</td></tr>
+                  <tr><td>标签</td><td>用于分类检索</td></tr>
+                  <tr><td>内容</td><td>作品正文或媒体</td></tr>
+                  <tr><td>封面</td><td>展示用封面图</td></tr>
+                  <tr><td>发布时间</td><td>创建时间</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mini-card"><h4 style="margin-bottom:8px">群内投影 <span style="font-size:11px;color:var(--ink-3);font-weight:400">Projection</span></h4>
+              <p style="margin-bottom:10px">作品在每个群空间中的"软链接"，独立持有互动数据：</p>
+              <table class="tbl tbl-2">
+                <tbody>
+                  <tr><td>所属群</td><td>投影所在的群空间</td></tr>
+                  <tr><td>点赞数量</td><td>本群内的点赞数</td></tr>
+                  <tr><td>评论数量</td><td>本群内的评论数</td></tr>
+                  <tr><td>收藏数量</td><td>本群内的收藏数</td></tr>
+                </tbody>
+              </table>
+              <div style="margin-top:12px;padding:10px 12px;background:var(--brand-soft);border:1px solid var(--brand-border);border-radius:8px;font-size:12.5px;color:var(--brand)">
+                对投影的互动不影响作品本体，也不影响其他群的投影。同一作品可在多个群空间被独立沉淀。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7.4 时间轴 -->
+      <section id="f-timeline">
+        <h3><span class="dot"></span>7.4 时间轴展示</h3>
+        <div class="card">
+          <p><b>目标：</b>按时间展示群体的创作历史，让群体的成长轨迹清晰可见。</p>
+          <div class="grid-2">
+            <div>
+              <div class="phone">
+                <div class="phone-bar">🌌 群星闪耀</div>
+                <div class="phone-screen">
+                  <div class="phone-title"><span>群创作时间轴</span><span style="font-size:11px;color:var(--ink-3);font-weight:400">2026</span></div>
+                  <div style="font-size:12px;color:var(--gold);font-weight:700;margin-top:8px">2026年8月</div>
+                  <div class="work-item">
+                    <div class="w-author"><span class="avatar">张</span>张三</div>
+                    <div class="w-title">《夏夜》</div>
+                    <div class="w-meta"><span>2026-08-04</span><span>❤️ 128</span></div>
+                  </div>
+                  <div class="work-item">
+                    <div class="w-author"><span class="avatar">李</span>李四</div>
+                    <div class="w-title">《云南摄影》</div>
+                    <div class="w-meta"><span>2026-08-02</span><span>❤️ 76</span></div>
+                  </div>
+                  <div style="font-size:12px;color:var(--gold);font-weight:700;margin-top:14px">2026年7月</div>
+                  <div class="work-item">
+                    <div class="w-author"><span class="avatar">王</span>王五</div>
+                    <div class="w-title">《AI项目》</div>
+                    <div class="w-meta"><span>2026-07-28</span><span>❤️ 54</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 style="margin-top:0"><span class="dot"></span>支持的时间切片</h3>
+              <div class="chips">
+                <span class="chip">今日</span><span class="chip">本周</span>
+                <span class="chip">本月</span><span class="chip">年度</span>
+              </div>
+              <h3><span class="dot"></span>能力说明</h3>
+              <ul>
+                <li>按日期分组展示群内作品</li>
+                <li>自动归入对应时间切片</li>
+                <li>点击作品进入详情</li>
+                <li>随时间累积形成群体创作年鉴</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7.5 作者主页 -->
+      <section id="f-profile">
+        <h3><span class="dot"></span>7.5 作者主页 · 星轨</h3>
+        <div class="card">
+          <p>每个用户拥有<b>个人星轨（Star Trail）</b>——自己的作品档案主页，展示创作数量、分类分布与最近作品。</p>
+          <div class="grid-2">
+            <div>
+              <div class="phone">
+                <div class="phone-bar">🌌 星轨</div>
+                <div class="phone-screen">
+                  <div class="phone-title"><span>张三</span></div>
+                  <div class="stat-row">
+                    <div class="stat-box"><b>128</b><span>作品数量</span></div>
+                    <div class="stat-box"><b>42</b><span>群友</span></div>
+                  </div>
+                  <div style="font-size:12px;color:var(--ink-3);font-weight:600;margin-top:12px">作品分类</div>
+                  <div class="chips" style="gap:6px">
+                    <span class="chip plain">文章 35</span>
+                    <span class="chip plain">摄影 42</span>
+                    <span class="chip plain">技术 18</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--ink-3);font-weight:600;margin-top:12px">最近作品</div>
+                  <div class="work-item"><div class="w-title">《夏夜》</div></div>
+                  <div class="work-item"><div class="w-title">《AI时代》</div></div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 style="margin-top:0"><span class="dot"></span>星轨承载的内容</h3>
+              <ul>
+                <li>作品总数与整体数据</li>
+                <li>按类型的分类分布</li>
+                <li>最近发布的代表作品</li>
+                <li>个人创作成长轨迹</li>
+              </ul>
+              <h3><span class="dot"></span>价值</h3>
+              <p>为创作者提供<b>长期展示空间</b>，让努力可见、成长可溯，形成创作者自驱分享的动力。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7.6 分类检索与搜索 -->
+      <section id="f-search">
+        <h3><span class="dot"></span>7.6 分类检索与搜索</h3>
+        <div class="card">
+          <h3 style="margin-top:0"><span class="dot"></span>多维度检索</h3>
+          <div class="grid-4">
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </div><h4>按类型</h4>
+              <div class="chips" style="gap:5px"><span class="chip plain">全部</span><span class="chip plain">文字</span><span class="chip plain">图片</span><span class="chip plain">音乐</span><span class="chip plain">视频</span><span class="chip plain">技术</span><span class="chip plain">其他</span></div>
+            </div>
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            </div><h4>按作者</h4>
+              <div class="chips" style="gap:5px"><span class="chip plain">张三</span><span class="chip plain">李四</span><span class="chip plain">王五</span></div>
+            </div>
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            </div><h4>按时间</h4>
+              <div class="chips" style="gap:5px"><span class="chip plain">今天</span><span class="chip plain">本周</span><span class="chip plain">本月</span><span class="chip plain">今年</span></div>
+            </div>
+            <div class="mini-card tone-gold"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v8H4v-8"/><path d="M8 6l4-3 4 3"/><path d="M12 3v9"/></svg>
+            </div><h4>按热度</h4>
+              <div class="chips" style="gap:5px"><span class="chip plain">热门作品</span><span class="chip plain">点赞最多</span><span class="chip plain">评论最多</span></div>
+            </div>
+          </div>
+
+          <h3><span class="dot"></span>关键词搜索</h3>
+          <p>支持关键词搜索，检索范围覆盖：<b>标题 · 内容 · 作者 · 标签</b>。</p>
+          <div class="grid-2">
+            <div>
+              <div class="wx-card">
+                <div class="wx-head"><span class="app-logo">🌌</span><b>搜索作品</b></div>
+                <div class="wx-body">
+                  <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+                    <span style="font-size:13px;color:var(--ink-2)">AI</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--ink-3);margin-top:10px">搜索结果</div>
+                  <div class="work-item" style="border:none;background:var(--bg);padding:8px 10px">
+                    <div class="w-author"><span class="avatar">张</span>张三</div>
+                    <div class="w-title">《AI时代的人类》</div>
+                  </div>
+                  <div class="work-item" style="border:none;background:var(--bg);padding:8px 10px">
+                    <div class="w-author"><span class="avatar">李</span>李四</div>
+                    <div class="w-title">《AI绘画实验》</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p style="margin-top:0">检索支持多条件叠加，帮助用户在海量群作品中<b>快速定位目标作品</b>。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7.7 社区互动 -->
+      <section id="f-interact">
+        <h3><span class="dot"></span>7.7 社区互动</h3>
+        <div class="card">
+          <div class="grid-3">
+            <div class="mini-card"><div class="icon tone-red">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--red)"><path d="M12 21s-7-4.6-9.3-9C.9 8.4 3 5 6.3 5c2 0 3.4 1.1 4.2 2.4h3C14.3 6.1 15.7 5 17.7 5 21 5 23.1 8.4 21.3 12c-2.3 4.4-9.3 9-9.3 9z"/></svg>
+            </div><h4>点赞</h4><p>成员对作品表达认可，按作品聚合计数展示，如 <b>❤️ 128</b>。</p></div>
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div><h4>评论</h4><p>支持<b>评论 / 回复 / @用户</b>，形成群内讨论。</p></div>
+            <div class="mini-card tone-gold"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h14v16l-7-4-7 4z"/></svg>
+            </div><h4>收藏</h4><p>成员将喜欢作品加入个人收藏，随取随看。</p></div>
+          </div>
+          <h3><span class="dot"></span>评论示例</h3>
+          <div style="max-width:420px;margin-top:10px">
+            <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--border)">
+              <span class="avatar" style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:12px;flex-shrink:0">李</span>
+              <div><b style="font-size:13.5px">李四：</b><span style="font-size:13.5px">这个观点很有启发。</span></div>
+            </div>
+            <div style="display:flex;gap:10px;padding:10px 0">
+              <span class="avatar" style="width:28px;height:28px;background:linear-gradient(135deg,#0e9f6e,#4f46e5);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:12px;flex-shrink:0">张</span>
+              <div><b style="font-size:13.5px">张三：</b><span style="font-size:13.5px">谢谢！</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 08 微信生态交互 ============ -->
+      <section id="wechat">
+        <div class="sec-head">
+          <div class="sec-num">08</div>
+          <h2>微信生态交互设计</h2>
+        </div>
+        <div class="sec-lead">依托微信关系链，将作品以精美卡片与图片的形式传播出去。</div>
+
+        <div class="card">
+          <h3 style="margin-top:0"><span class="dot"></span>8.1 小程序分享作品</h3>
+          <p>核心能力：用户分享作品时，自动生成<b>微信卡片</b>。</p>
+          <div class="wx-card">
+            <div class="wx-head"><span class="app-logo">🌌</span><b>群星闪耀</b></div>
+            <div class="wx-body">
+              <div class="wx-sub">张三的新作品</div>
+              <div class="wx-title">《夏夜》</div>
+              <span class="wx-type">原创诗歌</span>
+              <div class="wx-sub" style="margin-top:8px">❤️ 128人喜欢</div>
+            </div>
+            <div class="wx-foot"><span>点击查看</span><span>›</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0"><span class="dot"></span>8.2 分享图片设计</h3>
+          <p>不同作品类型生成不同风格的长图，适配朋友圈与群聊传播。</p>
+          <div class="share-art">
+            <div class="art poetry">
+              <div class="art-cover">
+                <span style="font-size:11px;opacity:.7">文学风格背景</span>
+                <b style="font-size:15px;margin-top:4px">《夏夜》</b>
+                <span style="font-size:11px;opacity:.75;margin-top:2px">张三 · 文学交流群</span>
+              </div>
+              <div class="art-caption">诗歌 · 文学风</div>
+            </div>
+            <div class="art photo">
+              <div class="art-cover">
+                <span style="font-size:11px;opacity:.85">摄影作品封面</span>
+                <b style="font-size:15px;margin-top:4px">《云南摄影》</b>
+                <span style="font-size:11px;opacity:.85;margin-top:2px">李四 · 摄影交流群</span>
+              </div>
+              <div class="art-caption">摄影 · 作品图作封面</div>
+            </div>
+            <div class="art tech">
+              <div class="art-cover">
+                <b style="font-size:20px">💻</b>
+                <b style="font-size:15px;margin-top:6px">群星 CLI</b>
+                <span style="font-size:11px;opacity:.85;margin-top:2px">王五 · 技术标签</span>
+              </div>
+              <div class="art-caption">技术 · 项目卡片</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0"><span class="dot"></span>8.3 分享场景</h3>
+          <div class="grid-3">
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5l8 7-8 7v-4C8 15 4 17 3 21c0-9 5-12 11-12z"/></svg>
+            </div><h4>发布后分享</h4><p>发布成功 → 分享到微信群 → 群成员查看</p></div>
+            <div class="mini-card"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 21h16"/></svg>
+            </div><h4>作品详情分享</h4><p>作品页面 → 分享 → 微信群</p></div>
+            <div class="mini-card tone-gold"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 21h16"/></svg>
+            </div><h4>群空间分享</h4><p>邀请成员加入群星空间</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 09 首页设计 ============ -->
+      <section id="home">
+        <div class="sec-head">
+          <div class="sec-num">09</div>
+          <h2>首页设计</h2>
+        </div>
+        <div class="card">
+          <div class="grid-2">
+            <div>
+              <div class="phone">
+                <div class="phone-bar">🌌 群星闪耀</div>
+                <div class="phone-screen">
+                  <div class="phone-title"><span>我的群</span></div>
+                  <div class="work-item"><div class="w-title">⭐ AI交流群</div><div class="w-meta"><span>328 作品 · 42 成员</span></div></div>
+                  <div class="work-item"><div class="w-title">⭐ 摄影交流群</div><div class="w-meta"><span>156 作品 · 26 成员</span></div></div>
+                  <div class="phone-title" style="font-size:12.5px;color:var(--ink-3);justify-content:flex-start;padding-top:10px">最新星光</div>
+                  <div class="work-item">
+                    <div class="w-author"><span class="avatar">张</span>张三</div>
+                    <div class="w-title">《夏夜》</div>
+                  </div>
+                  <div class="work-item">
+                    <div class="w-author"><span class="avatar">李</span>李四</div>
+                    <div class="w-title">《摄影集》</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 style="margin-top:0"><span class="dot"></span>首页承载</h3>
+              <ul>
+                <li><b>我的群：</b>用户已加入的群空间入口</li>
+                <li><b>最新星光：</b>跨群的最新优质作品流</li>
+                <li>从首页可直达任意群空间、作品与作者</li>
+              </ul>
+              <h3><span class="dot"></span>设计目标</h3>
+              <p>用<b>最少一步</b>触达群空间与最新内容，让"回到群里看看"成为高频动作。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 10 产品增长机制 ============ -->
+      <section id="growth">
+        <div class="sec-head">
+          <div class="sec-num">10</div>
+          <h2>产品增长机制</h2>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0"><span class="dot"></span>10.1 分享驱动增长</h3>
+          <p>以"分享"为核心的增长飞轮：</p>
+          <div class="stepper">
+            <div class="step"><div class="step-dot">1</div><b>发布作品</b><span>创作者产出内容</span></div>
+            <div class="step"><div class="step-dot">2</div><b>生成精美卡片</b><span>自动生成分享图</span></div>
+            <div class="step"><div class="step-dot">3</div><b>分享到微信群</b><span>依托关系链传播</span></div>
+            <div class="step"><div class="step-dot">4</div><b>群成员浏览</b><span>新成员进入</span></div>
+            <div class="step"><div class="step-dot">5</div><b>点赞评论</b><span>形成互动反馈</span></div>
+            <div class="step"><div class="step-dot">6</div><b>更多人发布</b><span>进入下一循环</span></div>
+          </div>
+          <p style="text-align:center;color:var(--gold);font-weight:600;margin-top:16px">↻ 循环往复，以内容沉淀带动用户增长</p>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0"><span class="dot"></span>10.2 年度群报告</h3>
+          <p>每年为群空间生成一份<b>群星报告</b>，总结群体一年的创作成果，强化归属感与分享欲。</p>
+          <div class="grid-2">
+            <div>
+              <div class="wx-card">
+                <div class="wx-head"><span class="app-logo">🌌</span><b>群星报告</b></div>
+                <div class="wx-body">
+                  <div class="wx-title">🌌 2026群星报告</div>
+                  <div class="stat-row">
+                    <div class="stat-box"><b>568</b><span>全年作品</span></div>
+                    <div class="stat-box"><b>42</b><span>参与人数</span></div>
+                  </div>
+                  <div style="margin-top:12px;font-size:12.5px">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px dashed var(--border)"><span style="color:var(--ink-3)">最佳作品</span><b>《xxx》</b></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px dashed var(--border)"><span style="color:var(--ink-3)">最活跃作者</span><b>张三</b></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 style="margin-top:0"><span class="dot"></span>报告价值</h3>
+              <ul>
+                <li>沉淀群体年度记忆</li>
+                <li>激励创作者持续输出</li>
+                <li>天然的年度传播素材</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 11 AI 增强 ============ -->
+      <section id="ai">
+        <div class="sec-head">
+          <div class="sec-num">11</div>
+          <h2>AI 增强方向</h2>
+        </div>
+        <div class="sec-lead">用 AI 降低创作与整理成本，让沉淀更聪明。</div>
+        <div class="card">
+          <div class="grid-3">
+            <div class="mini-card tone-purple"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-10 10"/></svg>
+            </div><h4>AI 自动分类</h4><p>上传作品后，AI 自动生成<b>类型</b>与<b>标签</b>。</p>
+              <div class="chips" style="gap:5px;margin-top:8px"><span class="chip">摄影</span><span class="chip plain">自然</span><span class="chip plain">旅行</span><span class="chip plain">人像</span></div>
+            </div>
+            <div class="mini-card tone-cyan"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 4.5L18.5 9l-4.6 1.5L12 15l-1.9-4.5L5.5 9l4.6-1.5z"/></svg>
+            </div><h4>AI 作品摘要</h4><p>长文章一键生成<b>核心观点</b>列表，降低阅读门槛。</p>
+              <ol style="font-size:12.5px;margin-top:8px"><li>核心观点一</li><li>核心观点二</li><li>核心观点三</li></ol>
+            </div>
+            <div class="mini-card tone-gold"><div class="icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 21h16"/></svg>
+            </div><h4>AI 群知识助手</h4><p>未来支持自然语言问答，检索群内沉淀。</p>
+              <p style="margin-top:8px;font-size:12.5px"><b style="color:var(--ink-2)">问：</b>去年群里有哪些AI相关作品？<br>
+              <b style="color:var(--green)">答：</b>共 38 篇 · 张三 12 篇 · 李四 8 篇</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 12 版本规划 ============ -->
+      <section id="roadmap">
+        <div class="sec-head">
+          <div class="sec-num">12</div>
+          <h2>MVP 版本规划</h2>
+        </div>
+        <div class="roadmap">
+          <div class="phase v1">
+            <span class="ph-badge">MVP · 必须实现</span>
+            <h4>V1.0 基础版本</h4>
+            <div class="ph-desc">跑通「建群 → 发布 → 互动」最小闭环</div>
+            <ul>
+              <li class="must">✅ 微信登录</li>
+              <li class="must">✅ 创建群空间</li>
+              <li class="must">✅ 加入群空间</li>
+              <li class="must">✅ 发布作品</li>
+              <li class="must">✅ 时间轴</li>
+              <li class="must">✅ 分类</li>
+              <li class="must">✅ 搜索</li>
+              <li class="must">✅ 点赞</li>
+              <li class="must">✅ 评论</li>
+              <li class="must">✅ 微信分享</li>
+            </ul>
+          </div>
+          <div class="phase v2">
+            <span class="ph-badge">迭代 · 增强</span>
+            <h4>V2.0</h4>
+            <div class="ph-desc">深化沉淀能力与内容运营</div>
+            <ul>
+              <li>收藏</li>
+              <li>标签系统</li>
+              <li>热门排行</li>
+              <li>年度总结</li>
+              <li>AI 分类</li>
+            </ul>
+          </div>
+          <div class="phase v3">
+            <span class="ph-badge">远景 · 创造档案</span>
+            <h4>V3.0</h4>
+            <div class="ph-desc">打造「群体创造档案」</div>
+            <ul>
+              <li>AI 群助手</li>
+              <li>群文化档案</li>
+              <li>创作者成长体系</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 13 核心价值总结 ============ -->
+      <section id="summary">
+        <div class="sec-head">
+          <div class="sec-num">13</div>
+          <h2>核心价值总结</h2>
+        </div>
+        <div class="card">
+          <p style="font-size:15px"><b>《群星闪耀》不是一个内容发布平台。</b><br>它解决的是：</p>
+          <div class="lead-quote gold" style="margin-top:10px">微信群中优秀内容无法沉淀的问题。</div>
+
+          <h3><span class="dot"></span>职责分工</h3>
+          <div class="who-box">
+            <div class="side">
+              <h4>微信负责</h4>
+              <div class="items"><span>关系</span><span>传播</span><span>互动</span></div>
+            </div>
+            <div class="side">
+              <h4>群星闪耀负责</h4>
+              <div class="items"><span>记录</span><span>整理</span><span>展示</span><span>成长</span></div>
+            </div>
+          </div>
+
+          <h3><span class="dot"></span>最终愿景</h3>
+          <div class="lead-quote" style="text-align:center;font-size:17px">一个属于每个微信群自己的 <span style="color:var(--gold)">数字星空</span></div>
+        </div>
+      </section>
+
+      <footer class="footer">《群星闪耀》Group Stars · 产品需求文档 V1.0 · 2026-08-05 · 微信小程序</footer>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // 目录滚动高亮
+  const links = document.querySelectorAll('.toc a');
+  const sections = [];
+  document.querySelectorAll('section[id]').forEach(s => sections.push(s));
+  function onScroll() {
+    const pos = window.scrollY + 120;
+    let current = sections[0] && sections[0].id;
+    for (const s of sections) if (s.offsetTop <= pos) current = s.id;
+    links.forEach(a => {
+      const active = a.getAttribute('href') === '#' + current;
+      a.classList.toggle('active', active);
+    });
+    document.getElementById('toTop').classList.toggle('show', window.scrollY > 600);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // 回到顶部
+  document.getElementById('toTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // 移动端目录抽屉
+  const sb = document.getElementById('sidebar');
+  const toggle = document.getElementById('sidebarToggle');
+  toggle.addEventListener('click', () => sb.classList.toggle('open'));
+  sb.querySelectorAll('a').forEach(a => a.addEventListener('click', () => sb.classList.remove('open')));
+</script>
+</body>
+</html>
