@@ -10,3 +10,16 @@ Thumbs.db
 
 # Node / 依赖
 node_modules/
+
+# 构建产物
+dist/
+*.tsbuildinfo
+
+# 日志
+*.log
+
+# 构建缓存 / Taro 临时产物
+.temp/
+.rn_temp/
+.swc/
+deploy_versions/
