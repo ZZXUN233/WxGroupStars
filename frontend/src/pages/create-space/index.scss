@@ -1,0 +1,58 @@
+.create-space {
+  padding: 32px 24px 60px;
+}
+
+.field {
+  margin-bottom: 28px;
+}
+
+.field-label {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: #566075;
+  margin-bottom: 14px;
+}
+
+.field-input {
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 18px 24px;
+  font-size: 28px;
+}
+
+.create-hint {
+  font-size: 24px;
+  color: #8b94a9;
+  line-height: 1.6;
+  margin: 8px 4px 0;
+}
+
+.submit {
+  margin-top: 40px;
+}
+
+/* ---------- 加入成功 ---------- */
+.join-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px 32px;
+}
+
+.join-emoji {
+  font-size: 88px;
+}
+
+.join-title {
+  font-size: 34px;
+  font-weight: 800;
+  margin-top: 24px;
+}
+
+.join-sub {
+  font-size: 24px;
+  color: #8b94a9;
+  margin-top: 12px;
+}

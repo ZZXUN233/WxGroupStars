@@ -16,6 +16,7 @@
     "rootDir": ".",
     "jsx": "react-jsx",
     "allowJs": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
     "typeRoots": [
       "node_modules/@types"

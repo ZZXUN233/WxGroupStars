@@ -1,0 +1,160 @@
+/* 群星闪耀 · 全局样式（对齐 PRD 设计令牌） */
+$brand: #4f46e5;
+$brand-deep: #3b34c9;
+$brand-soft: #eef0fd;
+$brand-border: #d9dcfb;
+$gold: #b8860b;
+$gold-soft: #faf3e3;
+$green: #0e9f6e;
+$green-soft: #e6f6f0;
+$bg: #f4f5fa;
+$card: #ffffff;
+$border: #e7e9f2;
+$ink: #1a2233;
+$ink-2: #566075;
+$ink-3: #8b94a9;
+$red: #d64545;
+$radius: 14px;
+$shadow: 0 1px 2px rgba(26, 34, 51, 0.05), 0 4px 16px rgba(26, 34, 51, 0.06);
+
+page {
+  background: $bg;
+  color: $ink;
+  font-size: 28px; // rpx 基准：Taro 默认
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* ---------- 卡片 ---------- */
+.card {
+  background: $card;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+/* ---------- 区块标题 ---------- */
+.section-title {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 24px 4px 16px;
+  display: flex;
+  align-items: center;
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 30px;
+    border-radius: 4px;
+    background: $brand;
+    margin-right: 12px;
+  }
+}
+
+/* ---------- 头像 ---------- */
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: $brand-soft;
+  color: $brand;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  Image {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* ---------- 标签 chip ---------- */
+.chip {
+  font-size: 22px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: $brand-soft;
+  color: $brand;
+  border: 1px solid $brand-border;
+  margin-right: 12px;
+  margin-bottom: 12px;
+
+  &.active {
+    background: $brand;
+    color: #fff;
+  }
+  &.plain {
+    background: $bg;
+    color: $ink-2;
+    border-color: $border;
+  }
+  &.gold {
+    background: $gold-soft;
+    color: $gold;
+    border-color: #ecd9ac;
+  }
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+  font-size: 30px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 18px 40px;
+  text-align: center;
+  background: $brand-soft;
+  color: $brand;
+  border: 1px solid $brand-border;
+
+  &.primary {
+    background: $brand;
+    color: #fff;
+    border-color: $brand;
+  }
+  &.disabled {
+    opacity: 0.5;
+  }
+}
+
+/* ---------- 空态 ---------- */
+.empty {
+  text-align: center;
+  color: $ink-3;
+  font-size: 26px;
+  padding: 80px 0;
+}
+
+/* ---------- 分隔 ---------- */
+.hairline {
+  height: 1px;
+  background: $border;
+  margin: 20px 0;
+}
+
+/* ---------- 时间戳 ---------- */
+.time {
+  color: $ink-3;
+  font-size: 22px;
+}
+
+/* ---------- 悬浮发布按钮（首页 / 群空间页） ---------- */
+.fab {
+  position: fixed;
+  right: 32px;
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+  z-index: 10;
+}

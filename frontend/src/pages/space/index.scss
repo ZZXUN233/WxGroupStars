@@ -1,0 +1,137 @@
+.space {
+  padding: 8px 24px 40px;
+}
+
+.space-head {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 0 4px;
+}
+
+.space-cover {
+  width: 120px;
+  height: 120px;
+  border-radius: 24px;
+  background: linear-gradient(160deg, #2b2a7a, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  Image { width: 100%; height: 100%; }
+}
+
+.space-emoji {
+  font-size: 56px;
+}
+
+.space-head-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.space-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.space-title {
+  font-size: 36px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-btn {
+  font-size: 20px;
+  color: #4f46e5;
+  background: #eef0fd;
+  border: 1px solid #d9dcfb;
+  padding: 2px 14px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.search-btn {
+  font-size: 26px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.space-stats {
+  display: flex;
+  gap: 24px;
+  font-size: 24px;
+  color: #8b94a9;
+  margin-top: 8px;
+}
+
+.slice-bar {
+  display: flex;
+  gap: 16px;
+  margin: 20px 0 8px;
+}
+
+.slice-chip {
+  flex: 1;
+  text-align: center;
+  font-size: 26px;
+  color: #566075;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 999px;
+  padding: 12px 0;
+
+  &.active {
+    color: #fff;
+    background: #4f46e5;
+    border-color: #4f46e5;
+    font-weight: 600;
+  }
+}
+
+.timeline {
+  height: 720px;
+}
+
+.group-label {
+  font-size: 24px;
+  color: #b8860b;
+  font-weight: 700;
+  margin: 24px 4px 12px;
+}
+
+.member-list {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 16px 24px;
+}
+
+.member-item {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.member-name {
+  margin-top: 10px;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.role-tag {
+  font-size: 18px;
+  color: #b8860b;
+  background: #faf3e3;
+  border: 1px solid #ecd9ac;
+  padding: 0 8px;
+  border-radius: 999px;
+}

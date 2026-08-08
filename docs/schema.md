@@ -30,7 +30,7 @@ CREATE TABLE `user_identity` (
   `user_id`     BIGINT UNSIGNED NOT NULL,
   `provider`    VARCHAR(16)  NOT NULL COMMENT 'wechat / h5 / sms...',
   `openid`      VARCHAR(128) NOT NULL COMMENT '微信 openid 等外部标识',
-  `unionid`     VARCHAR(128) DEFAULT NULL,
+  `unionid`     VARCHAR(128) DEFAULT NULL COMMENT '跨应用归并键（未来接 auth-center 统一身份用）',
   `created_at`  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   UNIQUE KEY `uk_provider_openid` (`provider`,`openid`),
   KEY `idx_user` (`user_id`)
@@ -56,7 +56,8 @@ CREATE TABLE `space` (
 ```
 
 ### 4. member 群成员（openid↔space）
-对应 ADR-0006（封闭性用它在读接口校验）。投影到某群 = 作者须先加入该群。
+对应 ADR-0006（封闭性用它在读接口校验）、ADR-0008（群上下文门禁加入）。
+投影到某群 = 作者须先加入该群。
 ```sql
 CREATE TABLE `member` (
   `id`          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -69,9 +70,10 @@ CREATE TABLE `member` (
   UNIQUE KEY `uk_space_user` (`space_id`,`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
+> 加入方式：群内打开分享卡片（shareTicket→openGId 命中该空间）自动加入；创建者即 owner。
 
 ### 5. work 作品本体（跨群唯一）
-对应 PRD 7.3、ADR 单表+类型枚举。不含互动计数（属于投影）。
+对应 PRD 7.3、ADR-0009（可编辑/软删）、ADR 单表+类型枚举。不含互动计数（属于投影）。
 ```sql
 CREATE TABLE `work` (
   `id`             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -80,12 +82,17 @@ CREATE TABLE `work` (
   `type`           ENUM('text','image','audio_video','tech','external')
                    NOT NULL COMMENT '作品类型',
   `text_content`   MEDIUMTEXT DEFAULT NULL COMMENT '文字作品正文',
-  `media_url`      VARCHAR(512) DEFAULT NULL COMMENT '图片/音视频：COS object key 或数组json',
+  `media_url`      VARCHAR(512) DEFAULT NULL COMMENT '图片：COS key 数组json(1-9张)；音视频：单 key；配合ADR-0005',
   `tech_code`      MEDIUMTEXT DEFAULT NULL COMMENT '技术作品：代码/方案',
   `external_link`  VARCHAR(512) DEFAULT NULL COMMENT '外部作品：链接',
-  `cover_url`      VARCHAR(512) DEFAULT NULL COMMENT '封面图 COS key',
-  `tags`           JSON DEFAULT NULL COMMENT '标签数组',
+  `cover_url`      VARCHAR(512) DEFAULT NULL COMMENT '封面图 COS key（必填；未传默认取第一张图片）',
+  `tags`           JSON DEFAULT NULL COMMENT '标签数组（MVP 作者手填 ≤5；AI 自动分类 V2）',
+  `review_status` VARCHAR(16) NOT NULL DEFAULT 'pass'
+                              COMMENT '内容审核(ADR-0014)：pass/pending/fail（图片异步审核）',
+  `is_active`      TINYINT(1) NOT NULL DEFAULT 1 COMMENT '软删：0=作品被删除，隐藏全部投影',
   `created_at`     DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at`     DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+                                 ON UPDATE CURRENT_TIMESTAMP(3),
   KEY `idx_author` (`author_id`),
   KEY `idx_type`   (`type`),
   FULLTEXT KEY `ft_title_content` (`title`,`text_content`) /* 可选，搜索 */
@@ -115,14 +122,14 @@ CREATE TABLE `projection` (
 > `is_active` 用于时间轴/列表过滤，软保留的互动随投影复活复用。
 
 ### 7. comment 评论
-对应 ADR-0007。挂 projection 隔离，支持回复（parent_id）与 @（mention）。
+对应 ADR-0007（挂 projection 隔离，两级结构：评论 + 一级回复）、ADR-0002。
 ```sql
 CREATE TABLE `comment` (
   `id`            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `projection_id` BIGINT UNSIGNED NOT NULL,
   `user_id`       BIGINT UNSIGNED NOT NULL,
   `content`       TEXT NOT NULL,
-  `parent_id`     BIGINT UNSIGNED DEFAULT NULL COMMENT '回复的上级评论',
+  `parent_id`     BIGINT UNSIGNED DEFAULT NULL COMMENT '所属评论 id（一级回复统一挂评论，不嵌套）',
   `reply_to_user_id` BIGINT UNSIGNED DEFAULT NULL COMMENT '@的目标 user.id',
   `is_active`     TINYINT(1) NOT NULL DEFAULT 1 COMMENT '软删除',
   `created_at`    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
