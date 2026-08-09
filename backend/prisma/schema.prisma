@@ -1,0 +1,220 @@
+// 群星闪耀 · Prisma Schema
+// 与 docs/schema.md 对齐（单一事实来源），并补充 ADR-0004 的 session 会话表。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkType {
+  text
+  image
+  audio_video
+  tech
+  external
+}
+
+enum ReviewStatus {
+  pass
+  pending
+  fail
+}
+
+enum MemberRole {
+  member
+  admin
+  owner
+}
+
+// 用户：自建 id 主键（ADR-0004）
+model User {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nickname  String?  @db.VarChar(64)
+  avatarUrl String?  @map("avatar_url") @db.VarChar(512)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  identities  UserIdentity[]
+  createdSpaces Space[]    @relation("SpaceCreator")
+  memberships Member[]
+  works       Work[]       @relation("WorkAuthor")
+  projections Projection[] @relation("ProjectionAuthor")
+  comments    Comment[]  @relation("CommentAuthor")
+  mentions    Comment[]  @relation("CommentMention")
+  likes       Like[]
+  collects    Collect[]
+  sessions    Session[]
+
+  @@map("user")
+}
+
+// 登录方式绑定：一个 user 可绑定多种 (provider, openid)（ADR-0004）
+model UserIdentity {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  provider  String   @db.VarChar(16)
+  openid    String   @db.VarChar(128)
+  unionid   String?  @db.VarChar(128)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, openid], name: "uk_provider_openid")
+  @@index([userId], name: "idx_user")
+  @@map("user_identity")
+}
+
+// 群空间：自建 spaceId，openGId 仅辅助去重（ADR-0001）
+model Space {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name      String   @db.VarChar(64)
+  creatorId BigInt   @map("creator_id") @db.UnsignedBigInt
+  openGid   String?  @map("open_gid") @db.VarChar(128)
+  coverUrl  String?  @map("cover_url") @db.VarChar(512)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  creator     User         @relation("SpaceCreator", fields: [creatorId], references: [id])
+  members     Member[]
+  projections Projection[]
+
+  @@index([openGid], name: "idx_open_gid")
+  @@map("space")
+}
+
+// 群成员（ADR-0006 封闭性、ADR-0008 门禁加入）
+model Member {
+  id       BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  spaceId  BigInt     @map("space_id") @db.UnsignedBigInt
+  userId   BigInt     @map("user_id") @db.UnsignedBigInt
+  role     MemberRole @default(member)
+  joinedAt DateTime   @default(now()) @map("joined_at") @db.DateTime(3)
+  isActive Boolean    @default(true) @map("is_active")
+
+  space Space @relation(fields: [spaceId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([spaceId, userId], name: "uk_space_user")
+  @@map("member")
+}
+
+// 作品本体：跨群唯一，不含互动计数（互动属于投影）
+model Work {
+  id           BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  authorId     BigInt       @map("author_id") @db.UnsignedBigInt
+  title        String       @db.VarChar(128)
+  type         WorkType
+  textContent  String?      @map("text_content") @db.MediumText
+  mediaUrl     String?      @map("media_url") @db.VarChar(512)
+  techCode     String?      @map("tech_code") @db.MediumText
+  externalLink String?      @map("external_link") @db.VarChar(512)
+  coverUrl     String?      @map("cover_url") @db.VarChar(512)
+  tags         Json?        @db.Json
+  reviewStatus ReviewStatus @default(pass) @map("review_status")
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
+
+  author      User         @relation("WorkAuthor", fields: [authorId], references: [id])
+  projections Projection[]
+
+  @@index([authorId], name: "idx_author")
+  @@index([type], name: "idx_type")
+  @@map("work")
+}
+
+// 群内投影：独立持有互动计数，软保留（ADR-0002 / 0007）
+model Projection {
+  id           BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  workId       BigInt  @map("work_id") @db.UnsignedBigInt
+  spaceId      BigInt  @map("space_id") @db.UnsignedBigInt
+  authorId     BigInt  @map("author_id") @db.UnsignedBigInt
+  isActive     Boolean @default(true) @map("is_active")
+  likeCount    Int     @default(0) @map("like_count") @db.UnsignedInt
+  commentCount Int     @default(0) @map("comment_count") @db.UnsignedInt
+  collectCount Int     @default(0) @map("collect_count") @db.UnsignedInt
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  work     Work      @relation(fields: [workId], references: [id])
+  space    Space     @relation(fields: [spaceId], references: [id])
+  author   User      @relation("ProjectionAuthor", fields: [authorId], references: [id])
+  comments Comment[]
+  likes    Like[]
+  collects Collect[]
+
+  @@unique([workId, spaceId], name: "uk_work_space")
+  @@index([spaceId, isActive, createdAt], name: "idx_space_active")
+  @@map("projection")
+}
+
+// 评论：两级扁平（评论 + 一级回复，ADR-0007）
+model Comment {
+  id            BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  projectionId  BigInt  @map("projection_id") @db.UnsignedBigInt
+  userId        BigInt  @map("user_id") @db.UnsignedBigInt
+  content       String  @db.Text
+  parentId      BigInt? @map("parent_id") @db.UnsignedBigInt
+  replyToUserId BigInt? @map("reply_to_user_id") @db.UnsignedBigInt
+  isActive      Boolean @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  projection Projection @relation(fields: [projectionId], references: [id])
+  user       User       @relation("CommentAuthor", fields: [userId], references: [id])
+  replyToUser User?     @relation("CommentMention", fields: [replyToUserId], references: [id])
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     Comment[] @relation("CommentReplies")
+
+  @@index([projectionId, isActive, createdAt], name: "idx_projection")
+  @@index([parentId], name: "idx_parent")
+  @@map("comment")
+}
+
+// 点赞：唯一约束幂等，toggle（ADR-0007）
+model Like {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  projectionId BigInt   @map("projection_id") @db.UnsignedBigInt
+  userId       BigInt   @map("user_id") @db.UnsignedBigInt
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  projection Projection @relation(fields: [projectionId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([projectionId, userId], name: "uk_proj_user")
+  @@map("like")
+}
+
+// 收藏：V2 功能，结构预留（ADR-0007）
+model Collect {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  projectionId BigInt   @map("projection_id") @db.UnsignedBigInt
+  userId       BigInt   @map("user_id") @db.UnsignedBigInt
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  projection Projection @relation(fields: [projectionId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([projectionId, userId], name: "uk_proj_user")
+  @@map("collect")
+}
+
+// 会话：不透明随机 token（ADR-0004），MVP 落 DB，量级上来再迁缓存
+// sessionKey：登录时 code2session 返回的微信会话密钥，用于 shareTicket 解密群信息（ADR-0008）；
+//              dev 模式（无真实凭据）为空串，解密端点走 mock 分支。
+model Session {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  token      String   @unique @db.VarChar(64)
+  userId     BigInt   @map("user_id") @db.UnsignedBigInt
+  sessionKey String?  @map("session_key") @db.VarChar(128)
+  expiresAt  DateTime @map("expires_at") @db.DateTime(3)
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("session")
+}
