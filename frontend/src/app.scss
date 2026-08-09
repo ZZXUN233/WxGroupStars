@@ -22,6 +22,28 @@ page {
   color: $ink;
   font-size: 28px; // rpx 基准：Taro 默认
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  // 横向溢出兜底：长字符串（URL/昵称/时间）不得把页面撑出横向滚动
+  overflow-x: hidden;
+}
+
+/* 全局盒子模型：width:100%/固定宽 + padding/border 计入宽度内，
+   避免「100% + padding」超出容器导致右侧被裁（如首页创建按钮）。 */
+view, text, input, textarea, button, image, scroll-view, navigator, form {
+  box-sizing: border-box;
+}
+
+/* ---------- 文本溢出防御（全站复用） ---------- */
+// 单行截断：昵称 / 时间 / 群名等单行展示的文本
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 长内容允许断词换行：正文 / 评论 / URL / 代码
+.break-all {
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 /* ---------- 卡片 ---------- */

@@ -13,10 +13,34 @@
   padding: 20px 0 8px;
 }
 
+/* 标题行：右侧固定「管理」入口（作者），标题可收缩，互不挤压 */
+.work-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+}
+
 .work-title {
+  flex: 1;
+  min-width: 0;
   font-size: 40px;
   font-weight: 800;
   line-height: 1.4;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.manage-link {
+  flex-shrink: 0;
+  margin-top: 8px;
+  font-size: 24px;
+  color: #4f46e5;
+  background: #eef0fd;
+  border: 1px solid #d9dcfb;
+  padding: 6px 20px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .work-meta {
@@ -24,6 +48,7 @@
   align-items: center;
   gap: 16px;
   margin-top: 12px;
+  min-width: 0;
 }
 
 .type-chip {
@@ -33,12 +58,21 @@
   border: 1px solid #d9dcfb;
   padding: 2px 14px;
   border-radius: 999px;
+  flex-shrink: 0;
 }
 
-.manage-link {
-  font-size: 24px;
-  color: #4f46e5;
-  margin-left: auto;
+/* 时间放 View 容器里收缩截断（Text 在 flex 中收缩不可靠） */
+.meta-time {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+
+  .time {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .author-line {
@@ -46,11 +80,17 @@
   align-items: center;
   gap: 12px;
   margin-top: 20px;
+  min-width: 0;
 }
 
 .author-name {
   font-size: 26px;
   font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .body-text {
@@ -58,6 +98,8 @@
   line-height: 1.8;
   color: #1a2233;
   margin-top: 24px;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .image-strip {
@@ -80,10 +122,72 @@
   font-size: 26px;
 }
 
+/* 视频播放（COS 直传地址） */
+.detail-video {
+  width: 100%;
+  height: 420px;
+  border-radius: 12px;
+  margin-top: 24px;
+  background: #000;
+}
+
+/* 音频播放器（createInnerAudioContext） */
+.audio-player {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 24px;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 28px 32px;
+}
+
+.audio-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #eef0fd;
+  color: #4f46e5;
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.audio-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.audio-title {
+  display: block;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a2233;
+}
+
+.audio-sub {
+  display: block;
+  margin-top: 6px;
+  font-size: 22px;
+  color: #8b94a9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tech-box {
   font-family: monospace;
   white-space: pre-wrap;
   line-height: 1.6;
+  word-break: break-all;
+}
+
+.external-box {
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .tag-row {
@@ -115,13 +219,24 @@
 
 .share-btn {
   margin-left: auto;
+  flex-shrink: 0;
+  width: auto;
+  min-height: 0;
+  height: auto;
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 24px;
   color: #fff;
-  background: #4f46e5;
+  background: linear-gradient(160deg, #4f46e5, #7c3aed);
   border-radius: 999px;
-  line-height: 2.2;
-  padding: 0 28px;
-  width: auto;
+  line-height: 1;
+  padding: 16px 36px;
+
+  &::after { border: none; }
 }
 
 .input-bar {

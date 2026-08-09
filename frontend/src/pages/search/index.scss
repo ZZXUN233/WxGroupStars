@@ -21,9 +21,17 @@
   padding: 12px 22px;
   flex-shrink: 0;
   max-width: 280px;
+  overflow: hidden;
+
+  > Text:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   .caret {
     font-size: 20px;
+    flex-shrink: 0;
   }
 }
 

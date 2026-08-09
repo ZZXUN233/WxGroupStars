@@ -20,6 +20,8 @@
   border-radius: 14px;
   padding: 18px 24px;
   font-size: 28px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .field-textarea {
@@ -125,15 +127,44 @@
   }
 }
 
-/* ---------- 音视频占位 ---------- */
+/* ---------- 音视频选择 ---------- */
 .media-pick {
   background: #fff;
   border: 1px solid #e7e9f2;
   border-radius: 14px;
-  padding: 36px;
+  padding: 24px;
+}
+
+.media-row {
+  display: flex;
+  gap: 16px;
+}
+
+.media-btn {
+  flex: 1;
+  padding: 22px 0;
   text-align: center;
-  font-size: 28px;
-  color: #4f46e5;
+  font-size: 26px;
+  color: #566075;
+  background: #f4f5fa;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+
+  &.on {
+    color: #4f46e5;
+    background: #eef0fd;
+    border-color: #4f46e5;
+    font-weight: 600;
+  }
+}
+
+.media-picked {
+  display: block;
+  margin-top: 16px;
+  font-size: 24px;
+  color: #0e9f6e;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 /* ---------- 群空间选择 ---------- */

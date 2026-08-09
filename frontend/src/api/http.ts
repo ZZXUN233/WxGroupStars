@@ -1,18 +1,37 @@
 /**
- * HTTP 请求封装（真实后端接入时启用）
- * 当前 api 层指向 mock；后端就绪后，将 src/api/index.ts 的实现替换为基于本文件的调用。
+ * HTTP 请求封装（真实后端）
+ * 当前 api 层已切到真实后端；开发环境默认连本地后端，
+ * 生产域名通过 .env 的 TARO_APP_BASE_URL 注入（ADR-0013）。
  */
 import Taro from '@tarojs/taro'
 import type { ApiResult } from '../types'
 
-const BASE_URL = 'https://api.zzxun.cn/group-stars' // TODO: 备案域名（ADR-0013）
+// 本地联调：微信开发者工具需勾选「不校验合法域名、web-view、TLS 版本以及 HTTPS 证书」；
+// 真机联调改局域网 IP（如 http://192.168.x.x:3000/group-stars）；
+// 正式上线改为 https://api.zzxun.cn/group-stars（ADR-0013）。
+// 注：小程序运行时没有 process，勿在此用 process.env 注入。
+const BASE_URL = 'http://localhost:3000/group-stars'
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   data?: unknown
 }
 
+/**
+ * 登录兜底钩子：由 api 层注册（避免 http ↔ api 循环依赖）。
+ * 每个需要鉴权的请求发出去前，若本地没有 token，先走登录拿 token，
+ * 这样首页并行发起 feed/spaces 时不会因为登录未完成而 401。
+ */
+let ensureAuth: (() => Promise<void>) | null = null
+export function setAuthHandler(fn: () => Promise<void>): void {
+  ensureAuth = fn
+}
+
 export async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
+  // 登录接口自身不触发登录（避免死循环）
+  if (ensureAuth && !url.startsWith('/auth/')) {
+    await ensureAuth()
+  }
   const token = Taro.getStorageSync('gs_token') || ''
   const res = await Taro.request<ApiResult<T>>({
     url: `${BASE_URL}${url}`,

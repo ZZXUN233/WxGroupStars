@@ -2,11 +2,22 @@ import { Image, Input, Text, Textarea, View } from '@tarojs/components'
 import Taro, { useLoad } from '@tarojs/taro'
 import { useState } from 'react'
 import type { Space, UpsertWorkInput, WorkType } from '../../types'
-import { editWork, getMySpaces, getWork, publishWork } from '../../api'
+import { COS_BASE_URL, editWork, getMySpaces, getPresign, getWork, publishWork, uploadToCos } from '../../api'
 import { WORK_TYPE_EMOJI, WORK_TYPE_LABEL } from '../../utils/workType'
 import './index.scss'
 
 const TYPES: WorkType[] = ['text', 'image', 'audio_video', 'tech', 'external']
+
+/** 本地临时文件：wxfile:// 或 http(s)://tmp 开头；COS 完整 URL 视为已上传对象（编辑回填） */
+const isLocalFile = (p: string) => p.startsWith('wxfile://') || p.startsWith('http://tmp') || p.startsWith('https://tmp')
+/** COS 完整 URL → object key（避免编辑时把 URL 当 key 重复拼接） */
+const keyOfUrl = (p: string) => (p.startsWith(COS_BASE_URL) ? p.slice(COS_BASE_URL.length + 1) : p)
+/** 从路径提取文件名（带扩展名），临时路径无扩展名时用 fallback 兜底 */
+const fileNameOf = (p: string, fallbackExt: string) => {
+  const seg = (p.split('/').pop() || '').split('?')[0]
+  return /\.[a-z0-9]+$/i.test(seg) ? seg : `file.${fallbackExt}`
+}
+const isAudioUrl = (u: string) => /\.(mp3|m4a|wav|aac|flac|ogg)(\?|$)/i.test(u)
 
 export default function Publish() {
   const [workId, setWorkId] = useState(0) // >0 为编辑模式
@@ -18,6 +29,8 @@ export default function Publish() {
   const [textContent, setTextContent] = useState('')
   const [images, setImages] = useState<string[]>([])
   const [mediaFile, setMediaFile] = useState('')
+  const [mediaKind, setMediaKind] = useState<'video' | 'audio'>('video')
+  const [mediaName, setMediaName] = useState('')
   const [techCode, setTechCode] = useState('')
   const [externalLink, setExternalLink] = useState('')
   const [tagsInput, setTagsInput] = useState('')
@@ -38,7 +51,12 @@ export default function Publish() {
       setType(w.type)
       setTextContent(w.textContent || '')
       setImages(w.mediaUrls || [])
-      setMediaFile(w.mediaUrls?.[0] || '')
+      if (w.type === 'audio_video' && w.mediaUrls?.[0]) {
+        const u = w.mediaUrls[0]
+        setMediaKind(isAudioUrl(u) ? 'audio' : 'video')
+        setMediaFile(u)
+        setMediaName(keyOfUrl(u))
+      }
       setTechCode(w.techCode || '')
       setExternalLink(w.externalLink || '')
       setTagsInput((w.tags || []).join('，'))
@@ -57,9 +75,32 @@ export default function Publish() {
 
   const removeImage = (i: number) => setImages(images.filter((_, x) => x !== i))
 
-  const pickMedia = async () => {
-    const res = await Taro.chooseMedia({ count: 1, mediaType: ['video', 'image'] })
-    setMediaFile(res.tempFiles[0].tempFilePath)
+  const pickVideo = async () => {
+    const res = await Taro.chooseMedia({ count: 1, mediaType: ['video'] })
+    const f = res.tempFiles[0]
+    setMediaKind('video')
+    setMediaFile(f.tempFilePath)
+    setMediaName(fileNameOf(f.tempFilePath, 'mp4'))
+  }
+
+  /** 音频：chooseMessageFile 支持纯音频文件（chooseMedia 不含音频） */
+  const pickAudio = async () => {
+    const res = await Taro.chooseMessageFile({
+      count: 1, type: 'file',
+      extension: ['mp3', 'm4a', 'wav', 'aac', 'flac', 'ogg'],
+    })
+    const f = res.tempFiles[0]
+    setMediaKind('audio')
+    setMediaFile(f.path)
+    setMediaName(f.name || fileNameOf(f.path, 'mp3'))
+  }
+
+  /** 本地临时文件直传 COS 返回 key；编辑回填的 COS URL 直接提取 key，不重复上传 */
+  const uploadOne = async (file: string, fallbackExt: string): Promise<string> => {
+    if (!isLocalFile(file)) return keyOfUrl(file)
+    const presign = (await getPresign(fileNameOf(file, fallbackExt))).data
+    await uploadToCos(file, presign)
+    return presign.key
   }
 
   const toggleSpace = (id: number) => {
@@ -79,17 +120,27 @@ export default function Publish() {
     if (!title.trim()) return toast('请填写标题')
     if (type === 'text' && !textContent.trim()) return toast('请填写正文')
     if (type === 'image' && !images.length) return toast('请至少选择 1 张图片')
-    if (type === 'audio_video' && !mediaFile) return toast('请选择媒体文件')
+    if (type === 'audio_video' && !mediaFile) return toast('请选择视频或音频文件')
     if (type === 'tech' && !techCode.trim()) return toast('请填写技术内容')
     if (type === 'external' && !externalLink.trim()) return toast('请填写外部链接')
     if (!workId && !selectedSpaces.length) return toast('请选择要发布的群空间')
+
+    // 先直传 COS 再发布：mediaKeys 落库为 COS object key（ADR-0005）
+    let mediaKeys: string[] | undefined
+    let coverKey: string | null | undefined
+    if (type === 'image') {
+      mediaKeys = await Promise.all(images.map((f) => uploadOne(f, 'jpg')))
+      coverKey = mediaKeys[0] ?? null
+    } else if (type === 'audio_video') {
+      mediaKeys = [await uploadOne(mediaFile, mediaKind === 'audio' ? 'mp3' : 'mp4')]
+    }
 
     const input: UpsertWorkInput = {
       title: title.trim(),
       type,
       textContent: type === 'text' ? textContent.trim() : null,
-      mediaKeys: type === 'image' ? images : type === 'audio_video' ? [mediaFile] : undefined,
-      coverKey: type === 'image' ? images[0] : undefined,
+      mediaKeys,
+      coverKey,
       tags: parseTags(tagsInput),
       externalLink: type === 'external' ? externalLink.trim() : null,
       techCode: type === 'tech' ? techCode.trim() : null,
@@ -102,6 +153,8 @@ export default function Publish() {
       else await publishWork(input)
       Taro.showToast({ title: workId ? '已保存' : '已发布', icon: 'success' })
       setTimeout(() => Taro.navigateBack(), 600)
+    } catch (err) {
+      toast((err as Error)?.message || '发布失败，请重试')
     } finally {
       setSubmitting(false)
     }
@@ -148,8 +201,12 @@ export default function Publish() {
           </View>
         )}
         {type === 'audio_video' && (
-          <View className='media-pick' onClick={pickMedia}>
-            {mediaFile ? <Text>✅ 已选媒体文件（点击可更换）</Text> : <Text>＋ 选择视频 / 图片</Text>}
+          <View className='media-pick'>
+            <View className='media-row'>
+              <View className={`media-btn ${mediaKind === 'video' ? 'on' : ''}`} onClick={pickVideo}>🎬 选视频</View>
+              <View className={`media-btn ${mediaKind === 'audio' ? 'on' : ''}`} onClick={pickAudio}>🎵 选音频</View>
+            </View>
+            {mediaFile ? <Text className='media-picked'>✅ 已选{mediaKind === 'video' ? '视频' : '音频'}：{mediaName}</Text> : null}
           </View>
         )}
         {type === 'tech' && (

@@ -146,3 +146,10 @@ export interface CreateCommentInput {
   parentId?: number | null
   replyToUserId?: number | null
 }
+
+/** COS 直传签名（ADR-0005）：Taro.uploadFile 用 { url, fields } 直传对象存储 */
+export interface PresignResult {
+  key: string
+  url: string
+  fields: Record<string, string>
+}

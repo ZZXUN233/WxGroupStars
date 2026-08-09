@@ -24,23 +24,31 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
 }
 
 .comment-name {
   font-size: 24px;
   font-weight: 600;
   color: #566075;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .comment-time {
   font-size: 20px;
   color: #8b94a9;
+  flex-shrink: 0;
 }
 
 .comment-content {
   font-size: 26px;
   margin-top: 6px;
   line-height: 1.6;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .comment-mention {

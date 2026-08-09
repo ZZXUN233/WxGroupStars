@@ -1,5 +1,5 @@
-import { Image, ScrollView, Text, View } from '@tarojs/components'
-import Taro, { useLoad } from '@tarojs/taro'
+import { Button, Image, ScrollView, Text, View } from '@tarojs/components'
+import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
 import { useMemo, useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Member, Projection, Space, TimelineSlice } from '../../types'
@@ -65,6 +65,12 @@ export default function Space() {
   const goPublish = () => Taro.navigateTo({ url: `/pages/publish/index?spaceId=${spaceId}` })
   const goSearch = () => Taro.navigateTo({ url: `/pages/search/index?spaceId=${spaceId}` })
 
+  // 群空间分享卡片：群友在群内打开 → 门禁自动加入（ADR-0008）
+  useShareAppMessage(() => ({
+    title: space ? `${space.name} · 群星闪耀` : '群星闪耀',
+    path: `/pages/space/index?id=${spaceId}`
+  }))
+
   const onManage = () => {
     if (!space) return
     Taro.showActionSheet({
@@ -101,6 +107,7 @@ export default function Space() {
             <View className='space-name-row'>
               <Text className='space-title'>{space.name}</Text>
               <Text className='search-btn' onClick={goSearch}>🔍</Text>
+              <Button className='share-btn' openType='share'>分享</Button>
               {isOwner ? <Text className='manage-btn' onClick={onManage}>管理</Text> : null}
             </View>
             <View className='space-stats'>

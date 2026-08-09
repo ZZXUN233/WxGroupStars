@@ -1,6 +1,6 @@
-import { Button, Image, Input, ScrollView, Text, View } from '@tarojs/components'
+import { Button, Image, Input, ScrollView, Text, Video, View } from '@tarojs/components'
 import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import CommentList from '../../components/CommentList'
 import { useApp } from '../../store'
 import type { Comment, Projection, Space } from '../../types'
@@ -11,6 +11,43 @@ import {
   getProjection, revokeProjection, toggleLike
 } from '../../api'
 import './index.scss'
+
+/** 按 URL 扩展名区分音频/视频（audio_video 类型单媒体） */
+const isAudioUrl = (u: string) => /\.(mp3|m4a|wav|aac|flac|ogg)(\?|$)/i.test(u)
+
+/** 音频播放器：createInnerAudioContext 编程式播放（微信 audio 组件已废弃） */
+function AudioPlayer({ src }: { src: string }) {
+  const [playing, setPlaying] = useState(false)
+  const ctx = useMemo(() => {
+    const c = Taro.createInnerAudioContext()
+    c.src = src
+    c.onEnded(() => setPlaying(false))
+    c.onError(() => setPlaying(false))
+    return c
+  }, [src])
+
+  useEffect(() => () => ctx.destroy(), [ctx])
+
+  const toggle = () => {
+    if (playing) {
+      ctx.pause()
+      setPlaying(false)
+    } else {
+      ctx.play()
+      setPlaying(true)
+    }
+  }
+
+  return (
+    <View className='audio-player' onClick={toggle}>
+      <Text className='audio-icon'>{playing ? '⏸' : '▶️'}</Text>
+      <View className='audio-meta'>
+        <Text className='audio-title'>{playing ? '播放中…' : '点击播放音频'}</Text>
+        <Text className='audio-sub'>{src.split('/').pop()}</Text>
+      </View>
+    </View>
+  )
+}
 
 export default function WorkDetail() {
   const { user } = useApp()
@@ -125,7 +162,9 @@ export default function WorkDetail() {
           </ScrollView>
         )
       case 'audio_video':
-        return <View className='media-box'>🎬 音视频作品（播放器接入 COS 播放地址）</View>
+        return mediaUrls[0] ? (
+          isAudioUrl(mediaUrls[0]) ? <AudioPlayer src={mediaUrls[0]} /> : <Video className='detail-video' src={mediaUrls[0]} controls />
+        ) : <View className='media-box'>未找到媒体文件</View>
       case 'tech':
         return <View className='tech-box'>{w.techCode}</View>
       case 'external':
@@ -140,11 +179,13 @@ export default function WorkDetail() {
     <View className='detail'>
       <ScrollView scrollY className='detail-scroll'>
         <View className='work-head'>
-          <View className='work-title'>{w.title}</View>
+          <View className='work-title-row'>
+            <View className='work-title'>{w.title}</View>
+            {isAuthor ? <Text className='manage-link' onClick={onAuthorManage}>管理</Text> : null}
+          </View>
           <View className='work-meta'>
             <Text className='type-chip'>{WORK_TYPE_LABEL[w.type]}</Text>
-            <Text className='time'>{dateTime(projection.projectedAt)}</Text>
-            {isAuthor ? <Text className='manage-link' onClick={onAuthorManage}>管理</Text> : null}
+            <View className='meta-time'><Text className='time'>{dateTime(projection.projectedAt)}</Text></View>
           </View>
           <View className='author-line'>
             <View className='avatar avatar-sm'>
@@ -170,7 +211,7 @@ export default function WorkDetail() {
             <Text>💬</Text>
             <Text>{projection.commentCount}</Text>
           </View>
-          <Button className='share-btn' openType='share'>分享</Button>
+          <Button className='share-btn' openType='share'>📤 分享</Button>
         </View>
 
         <View className='section-title'>评论</View>
