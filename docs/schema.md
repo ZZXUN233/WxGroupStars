@@ -162,6 +162,20 @@ CREATE TABLE `collect` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
+### 10. session 会话（不透明随机 token）
+对应 ADR-0004。MVP 落 DB 会话表，量级上来再迁 Redis/缓存。
+```sql
+CREATE TABLE `session` (
+  `id`          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `token`       VARCHAR(64) NOT NULL,
+  `user_id`     BIGINT UNSIGNED NOT NULL,
+  `expires_at`  DATETIME(3) NOT NULL,
+  `created_at`  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  UNIQUE KEY `uk_token` (`token`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
 ---
 
 ## 冗余计数一致性（ADR-0007）

@@ -23,3 +23,6 @@ dist/
 .rn_temp/
 .swc/
 deploy_versions/
+
+# 微信开发者工具私有配置（appid 等，不入库）
+project.private.config.json
