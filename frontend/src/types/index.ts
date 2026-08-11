@@ -32,7 +32,8 @@ export interface Page<T> {
 /** 用户（user.id 中立身份） */
 export interface User {
   id: number
-  nickname: string
+  /** 昵称可为空：微信登录不返回昵称，由「头像昵称填写」主动设置（PATCH /auth/profile） */
+  nickname: string | null
   avatarUrl: string | null
 }
 
@@ -68,6 +69,8 @@ export interface Work {
   externalLink: string | null
   techCode: string | null
   reviewStatus: ReviewStatus
+  /** 草稿：不投影到群、feed 不可见，仅作者可见（编辑后未发布的中间态） */
+  isDraft: boolean
   createdAt: string
   updatedAt: string
 }
@@ -136,6 +139,8 @@ export interface UpsertWorkInput {
   tags?: string[]
   externalLink?: string | null
   techCode?: string | null
+  /** true=保存草稿（不投影）；false=从草稿发布（需 spaceIds） */
+  draft?: boolean
   /** 发布时指定投影到的群空间（PRD 7.3） */
   spaceIds?: number[]
 }

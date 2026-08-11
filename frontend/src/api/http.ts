@@ -7,13 +7,13 @@ import Taro from '@tarojs/taro'
 import type { ApiResult } from '../types'
 
 // 本地联调：微信开发者工具需勾选「不校验合法域名、web-view、TLS 版本以及 HTTPS 证书」；
-// 真机联调改局域网 IP（如 http://192.168.x.x:3000/group-stars）；
+// 真机联调用局域网 IP（本机 WLAN 192.168.31.80），真机需与开发机同网段；
 // 正式上线改为 https://api.zzxun.cn/group-stars（ADR-0013）。
 // 注：小程序运行时没有 process，勿在此用 process.env 注入。
-const BASE_URL = 'http://localhost:3000/group-stars'
+const BASE_URL = 'http://192.168.31.80:3000/group-stars'
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   data?: unknown
 }
 
@@ -28,8 +28,8 @@ export function setAuthHandler(fn: () => Promise<void>): void {
 }
 
 export async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
-  // 登录接口自身不触发登录（避免死循环）
-  if (ensureAuth && !url.startsWith('/auth/')) {
+  // 登录接口自身不触发登录（避免死循环）；其余接口（含 /auth/me 等鉴权接口）无 token 时先登录
+  if (ensureAuth && !url.startsWith('/auth/login')) {
     await ensureAuth()
   }
   const token = Taro.getStorageSync('gs_token') || ''
@@ -52,4 +52,5 @@ export async function request<T>(url: string, options: RequestOptions = {}): Pro
 export const get = <T>(url: string, data?: unknown) => request<T>(url, { method: 'GET', data })
 export const post = <T>(url: string, data?: unknown) => request<T>(url, { method: 'POST', data })
 export const put = <T>(url: string, data?: unknown) => request<T>(url, { method: 'PUT', data })
+export const patch = <T>(url: string, data?: unknown) => request<T>(url, { method: 'PATCH', data })
 export const del = <T>(url: string, data?: unknown) => request<T>(url, { method: 'DELETE', data })

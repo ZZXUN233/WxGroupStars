@@ -1,6 +1,6 @@
 import { Image, Text, View } from '@tarojs/components'
 import type { Comment } from '../types'
-import { timeAgo } from '../utils/format'
+import { timeAgo, displayName, initial } from '../utils/format'
 import './CommentList.scss'
 
 interface Props {
@@ -18,16 +18,15 @@ function CommentRow({ c, onReply, onDelete, isReply }: {
   return (
     <View className={`comment-row ${isReply ? 'is-reply' : ''}`}>
       <View className='comment-avatar avatar avatar-sm'>
-        {c.user.avatarUrl ? <Image src={c.user.avatarUrl} mode='aspectFill' /> : null}
-        <Text>{c.user.nickname.slice(0, 1)}</Text>
+        {c.user.avatarUrl ? <Image src={c.user.avatarUrl} mode='aspectFill' /> : <Text>{initial(c.user.nickname)}</Text>}
       </View>
       <View className='comment-main'>
         <View className='comment-head'>
-          <Text className='comment-name'>{c.user.nickname}</Text>
+          <Text className='comment-name'>{displayName(c.user.nickname)}</Text>
           <Text className='comment-time'>{timeAgo(c.createdAt)}</Text>
         </View>
         <View className='comment-content'>
-          {c.replyToUser ? <Text className='comment-mention'>@{c.replyToUser.nickname} </Text> : null}
+          {c.replyToUser ? <Text className='comment-mention'>@{displayName(c.replyToUser.nickname)} </Text> : null}
           {c.content}
         </View>
         <View className='comment-actions'>

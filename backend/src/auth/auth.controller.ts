@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post } from '@nestjs/common'
+import { Body, Controller, Get, Patch, Post } from '@nestjs/common'
 import { CurrentUser } from '../common/decorators/current-user.decorator'
 import type { AuthUser } from '../common/decorators/current-user.decorator'
 import { Public } from '../common/decorators/public.decorator'
@@ -19,6 +19,12 @@ export class AuthController {
   @Post('group-info')
   groupInfo(@CurrentUser() user: AuthUser, @Body() dto: GroupInfoDto) {
     return this.authService.groupInfo(user.sessionKey, dto)
+  }
+
+  /** 当前用户最新资料（昵称/头像可能已改，进入编辑资料页时拉最新） */
+  @Get('me')
+  me(@CurrentUser() user: AuthUser) {
+    return this.authService.me(user.id)
   }
 
   @Patch('profile')

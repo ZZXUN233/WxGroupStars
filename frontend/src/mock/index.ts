@@ -234,7 +234,7 @@ export async function publishWork(input: UpsertWorkInput): Promise<ApiResult<Wor
     mediaUrls: input.mediaKeys || [],
     coverUrl: input.coverKey || ph(input.title.slice(0, 2), '#4f46e5', '#7c3aed'),
     tags: input.tags || [], externalLink: input.externalLink ?? null, techCode: input.techCode ?? null,
-    reviewStatus: 'pass', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    reviewStatus: 'pass', isDraft: input.draft === true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   }
   WORKS.push(work)
   // 发布到指定群空间 → 生成投影（PRD 7.3）

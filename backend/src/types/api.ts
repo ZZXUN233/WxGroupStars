@@ -58,6 +58,8 @@ export interface WorkDto {
   externalLink: string | null
   techCode: string | null
   reviewStatus: 'pass' | 'pending' | 'fail'
+  /** 草稿（Work.is_draft）：草稿不投影到群、feed 不可见，仅作者可见 */
+  isDraft: boolean
   createdAt: string
   updatedAt: string
 }
@@ -117,6 +119,8 @@ export interface UpsertWorkInput {
   tags?: string[]
   externalLink?: string | null
   techCode?: string | null
+  /** true=保存草稿（不投影）；false=从草稿发布（需 spaceIds）；undefined=普通发布/编辑 */
+  draft?: boolean
   spaceIds?: number[]
 }
 

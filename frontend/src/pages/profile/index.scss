@@ -36,6 +36,52 @@
   margin-top: 8px;
 }
 
+/* 昵称未设置时的引导（同步微信资料） */
+.profile-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #eef2ff;
+  border: 1px solid #dbe3ff;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-top: 20px;
+}
+
+.profile-guide-text {
+  font-size: 26px;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.profile-guide-arrow {
+  font-size: 34px;
+  color: #8b94a9;
+}
+
+/* 我的草稿/编辑资料入口（仅查看自己时显示） */
+.entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.entry-label {
+  font-size: 26px;
+  color: #1a2233;
+  font-weight: 600;
+}
+
+.entry-arrow {
+  font-size: 34px;
+  color: #8b94a9;
+}
+
 .dist-row {
   display: flex;
   justify-content: space-between;

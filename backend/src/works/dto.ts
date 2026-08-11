@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { ArrayMaxSize, IsArray, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator'
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator'
 import type { WorkType } from '../types/api'
 
 const WORK_TYPES = ['text', 'image', 'audio_video', 'tech', 'external'] as const
@@ -50,6 +50,10 @@ export class UpsertWorkDto {
   @ArrayMaxSize(20)
   @IsInt({ each: true })
   spaceIds?: number[]
+
+  @IsOptional()
+  @IsBoolean()
+  draft?: boolean
 }
 
 export class AppendProjectionDto {

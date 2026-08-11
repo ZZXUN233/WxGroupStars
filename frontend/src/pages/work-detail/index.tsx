@@ -2,9 +2,10 @@ import { Button, Image, Input, ScrollView, Text, Video, View } from '@tarojs/com
 import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
 import { useEffect, useMemo, useState } from 'react'
 import CommentList from '../../components/CommentList'
+import Markdown from '../../components/Markdown'
 import { useApp } from '../../store'
 import type { Comment, Projection, Space } from '../../types'
-import { dateTime } from '../../utils/format'
+import { dateTime, displayName, initial } from '../../utils/format'
 import { WORK_TYPE_LABEL } from '../../utils/workType'
 import {
   addProjection, createComment, deleteComment, deleteWork, getComments, getMySpaces,
@@ -14,6 +15,43 @@ import './index.scss'
 
 /** 按 URL 扩展名区分音频/视频（audio_video 类型单媒体） */
 const isAudioUrl = (u: string) => /\.(mp3|m4a|wav|aac|flac|ogg)(\?|$)/i.test(u)
+
+/**
+ * 网络媒体防盗链兜底：COS 桶拒绝空 Referer 的请求，<video>/createInnerAudioContext 原生播放器的
+ * 请求 Referer 不受 JS 控制、真机可能不带 → 403 播不了。改用 Taro.downloadFile 先下载到本地
+ * 临时文件（微信会强制注入 servicewechat.com Referer，已在 COS 防盗链白名单内，实测 206），
+ * 再播本地路径，绕开防盗链。
+ */
+function useLocalMedia(url: string | undefined): { src: string; loading: boolean; error: string } {
+  const [src, setSrc] = useState(url || '')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    if (!url) {
+      setSrc(''); setLoading(false); setError('')
+      return
+    }
+    // 本地文件直接用，无需下载
+    if (url.startsWith('wxfile://') || url.startsWith('http://tmp') || url.startsWith('https://tmp')) {
+      setSrc(url); setLoading(false); setError('')
+      return
+    }
+    setSrc(''); setLoading(true); setError('')
+    Taro.downloadFile({ url, timeout: 30000 })
+      .then((res) => {
+        if (cancelled) return
+        if (res.statusCode === 200) setSrc(res.tempFilePath)
+        else setError(`媒体下载失败（${res.statusCode}）`)
+      })
+      .catch(() => { if (!cancelled) setError('媒体下载失败，请稍后重试') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [url])
+
+  return { src, loading, error }
+}
 
 /** 音频播放器：createInnerAudioContext 编程式播放（微信 audio 组件已废弃） */
 function AudioPlayer({ src }: { src: string }) {
@@ -66,7 +104,7 @@ export default function WorkDetail() {
   })
 
   useShareAppMessage(() => ({
-    title: projection ? `「${projection.work.title}」by ${projection.work.author.nickname}` : '群星闪耀',
+    title: projection ? `「${projection.work.title}」by ${displayName(projection.work.author.nickname)}` : '群星闪耀',
     path: `/pages/work-detail/index?projectionId=${projectionId}&spaceId=${spaceId}`
   }))
 
@@ -85,7 +123,7 @@ export default function WorkDetail() {
   }
 
   const onReply = (c: Comment) => {
-    setReplyTarget({ parentId: c.id, replyToUserId: c.user.id, label: `回复 @${c.user.nickname}` })
+    setReplyTarget({ parentId: c.id, replyToUserId: c.user.id, label: `回复 @${displayName(c.user.nickname)}` })
   }
 
   const submitComment = async () => {
@@ -149,12 +187,15 @@ export default function WorkDetail() {
   }
 
   const mediaUrls = projection?.work.mediaUrls || []
+  const rawMedia = projection?.work.type === 'audio_video' ? mediaUrls[0] : undefined
+  const { src: localMedia, loading: mediaLoading, error: mediaError } = useLocalMedia(rawMedia)
   const workBody = useMemo(() => {
     const w = projection?.work
     if (!w) return null
     switch (w.type) {
       case 'text':
-        return <View className='body-text'>{w.textContent}</View>
+        // 文字正文走 Markdown 渲染（标题/列表/代码块等，Markdown 组件）
+        return <Markdown content={w.textContent || ''} />
       case 'image':
         return (
           <ScrollView scrollX className='image-strip'>
@@ -162,15 +203,16 @@ export default function WorkDetail() {
           </ScrollView>
         )
       case 'audio_video':
-        return mediaUrls[0] ? (
-          isAudioUrl(mediaUrls[0]) ? <AudioPlayer src={mediaUrls[0]} /> : <Video className='detail-video' src={mediaUrls[0]} controls />
-        ) : <View className='media-box'>未找到媒体文件</View>
+        if (!rawMedia) return <View className='media-box'>未找到媒体文件</View>
+        if (mediaLoading) return <View className='media-box'>媒体加载中…</View>
+        if (mediaError) return <View className='media-box'>⚠️ {mediaError}</View>
+        return isAudioUrl(rawMedia) ? <AudioPlayer src={localMedia} /> : <Video className='detail-video' src={localMedia} controls />
       case 'tech':
         return <View className='tech-box'>{w.techCode}</View>
       case 'external':
         return <View className='external-box'>🔗 {w.externalLink}</View>
     }
-  }, [projection])
+  }, [projection, localMedia, mediaLoading, mediaError])
 
   if (!projection) return <View className='empty'>加载中…</View>
 
@@ -189,14 +231,24 @@ export default function WorkDetail() {
           </View>
           <View className='author-line'>
             <View className='avatar avatar-sm'>
-              {w.author.avatarUrl ? <Image src={w.author.avatarUrl} mode='aspectFill' /> : null}
-              <Text>{w.author.nickname.slice(0, 1)}</Text>
+              {w.author.avatarUrl ? <Image src={w.author.avatarUrl} mode='aspectFill' /> : <Text>{initial(w.author.nickname)}</Text>}
             </View>
-            <Text className='author-name' onClick={() => Taro.navigateTo({ url: `/pages/profile/index?userId=${w.author.id}&spaceId=${spaceId}` })}>{w.author.nickname}</Text>
+            <Text className='author-name' onClick={() => Taro.navigateTo({ url: `/pages/profile/index?userId=${w.author.id}&spaceId=${spaceId}` })}>{displayName(w.author.nickname)}</Text>
           </View>
         </View>
 
+        {/* 非图片类型的封面展示（图片类型首图已在主体滚动条中） */}
+        {w.coverUrl && w.type !== 'image' ? <Image className='detail-cover' src={w.coverUrl} mode='widthFix' /> : null}
+
         {workBody}
+
+        {/* 全类型内容说明（文字类型即正文已渲染，其余在主体下方展示介绍/心得） */}
+        {w.type !== 'text' && w.textContent ? (
+          <View className='body-desc'>
+            <View className='section-title'>说明</View>
+            <Markdown content={w.textContent} />
+          </View>
+        ) : null}
 
         {w.tags?.length ? (
           <View className='tag-row'>{w.tags.map((t) => <Text key={t} className='chip plain'>{t}</Text>)}</View>

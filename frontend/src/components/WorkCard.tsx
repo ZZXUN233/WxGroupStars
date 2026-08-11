@@ -1,7 +1,7 @@
 import { Image, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import type { Projection } from '../types'
-import { timeAgo } from '../utils/format'
+import { timeAgo, displayName, initial } from '../utils/format'
 import { WORK_TYPE_EMOJI, WORK_TYPE_LABEL } from '../utils/workType'
 import './WorkCard.scss'
 
@@ -30,10 +30,9 @@ export default function WorkCard({ projection, spaceName }: Props) {
         <View className='work-meta'>
           <View className='work-author'>
             <View className='avatar avatar-sm'>
-              {work.author.avatarUrl ? <Image src={work.author.avatarUrl} mode='aspectFill' /> : null}
-              <Text>{work.author.nickname.slice(0, 1)}</Text>
+              {work.author.avatarUrl ? <Image src={work.author.avatarUrl} mode='aspectFill' /> : <Text>{initial(work.author.nickname)}</Text>}
             </View>
-            <Text className='work-author-name'>{work.author.nickname}</Text>
+            <Text className='work-author-name'>{displayName(work.author.nickname)}</Text>
           </View>
           <Text className='work-type'>{WORK_TYPE_LABEL[work.type]}</Text>
         </View>

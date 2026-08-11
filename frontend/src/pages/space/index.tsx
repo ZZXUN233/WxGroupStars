@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Member, Projection, Space, TimelineSlice } from '../../types'
 import { getSpaceDetail, getSpaceMembers, getSpaceTimeline, transferOwner, updateSpace } from '../../api'
+import { displayName, initial } from '../../utils/format'
 import './index.scss'
 
 const SLICES: { key: TimelineSlice; label: string }[] = [
@@ -86,7 +87,7 @@ export default function Space() {
         } else if (res.tapIndex === 1) {
           const owner = members.find((m) => m.role === 'owner')
           const others = members.filter((m) => m.user.id !== owner?.user.id)
-          const idx = others.map((m) => m.user.nickname)
+          const idx = others.map((m) => displayName(m.user.nickname))
           const pick = await Taro.showActionSheet({ itemList: idx })
           if (pick.tapIndex >= 0) {
             await transferOwner(space.id, others[pick.tapIndex].id)
@@ -141,11 +142,10 @@ export default function Space() {
         {members.map((m) => (
           <View key={m.id} className='member-item' onClick={() => goMember(m)}>
             <View className='avatar'>
-              {m.user.avatarUrl ? <Image src={m.user.avatarUrl} mode='aspectFill' /> : null}
-              <Text>{m.user.nickname.slice(0, 1)}</Text>
+              {m.user.avatarUrl ? <Image src={m.user.avatarUrl} mode='aspectFill' /> : <Text>{initial(m.user.nickname)}</Text>}
             </View>
             <View className='member-name'>
-              <Text>{m.user.nickname}</Text>
+              <Text>{displayName(m.user.nickname)}</Text>
               {m.role === 'owner' ? <Text className='role-tag'>群主</Text> : null}
             </View>
           </View>

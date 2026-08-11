@@ -1,0 +1,94 @@
+/* 轻量 Markdown 渲染样式（Markdown.tsx 共用，发布页预览与详情页一致） */
+.md {
+  font-size: 28px;
+  line-height: 1.75;
+  color: #1a2233;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.md-p {
+  margin-bottom: 16px;
+}
+
+.md-h {
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 28px 0 14px;
+}
+
+.md-h1 { font-size: 40px; }
+.md-h2 { font-size: 36px; }
+.md-h3 { font-size: 33px; }
+.md-h4 { font-size: 30px; }
+.md-h5, .md-h6 {
+  font-size: 28px;
+  color: #566075;
+}
+
+.md-strong { font-weight: 700; }
+.md-em { font-style: italic; }
+
+.md-code {
+  font-family: monospace;
+  font-size: 24px;
+  color: #d6336c;
+  background: #f2f3f8;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.md-pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: monospace;
+  font-size: 24px;
+  line-height: 1.6;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 16px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.md-quote {
+  border-left: 6px solid #d9dcfb;
+  background: #f7f8fd;
+  color: #566075;
+  padding: 16px 20px;
+  margin: 16px 0;
+  border-radius: 0 12px 12px 0;
+}
+
+.md-ul, .md-ol {
+  margin: 8px 0 16px;
+}
+
+.md-li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.md-bullet {
+  flex-shrink: 0;
+  width: 44px;
+  margin-right: 8px;
+  color: #4f46e5;
+}
+
+.md-li-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.md-link {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+.md-img {
+  width: 100%;
+  border-radius: 12px;
+  margin: 8px 0;
+}

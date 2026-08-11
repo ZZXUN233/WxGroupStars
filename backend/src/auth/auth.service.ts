@@ -57,14 +57,22 @@ export class AuthService {
     return { openGid: openGId }
   }
 
-  /** 更新昵称/头像（微信头像昵称填写，roadmap §四） */
+  /** 当前登录用户最新资料（昵称/头像），编辑资料页进入时拉取——绕过前端 login 的 lastSession 缓存 */
+  async me(userId: number): Promise<UserDto> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    return userToDto(user)
+  }
+
+  /** 更新昵称/头像（微信头像昵称填写，ADR-0017）
+   * 昵称与头像一样可随时更新：微信昵称键盘一键填入最新微信昵称，与头像一起保存；
+   * avatarUrl 传 null 清除头像，undefined 保持。 */
   async updateProfile(userId: number, input: { nickname?: string; avatarUrl?: string | null }): Promise<UserDto> {
+    const data: { nickname?: string; avatarUrl?: string | null } = {}
+    if (input.nickname !== undefined) data.nickname = input.nickname
+    if (input.avatarUrl !== undefined) data.avatarUrl = input.avatarUrl
     const user = await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        nickname: input.nickname ?? undefined,
-        avatarUrl: input.avatarUrl ?? undefined,
-      },
+      data,
     })
     return userToDto(user)
   }

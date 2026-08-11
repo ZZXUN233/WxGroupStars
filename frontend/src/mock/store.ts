@@ -60,47 +60,47 @@ export const WORKS: Work[] = [
     id: 3001, title: '《AI 时代的人类》', author: USERS[1002], type: 'text',
     textContent: '当机器开始思考，人类的价值将回归于创造、情感与判断。',
     mediaUrls: [], coverUrl: ph('AI', '#6366f1', '#4f46e5'), tags: ['观点', 'AI'],
-    externalLink: null, techCode: null, reviewStatus: 'pass',
+    externalLink: null, techCode: null, reviewStatus: 'pass', isDraft: false,
     createdAt: '2026-07-28T03:00:00.000Z', updatedAt: '2026-07-28T03:00:00.000Z'
   },
   {
     id: 3002, title: '《夏夜》', author: USERS[1002], type: 'image',
     textContent: null, mediaUrls: [ph('夏夜1', '#f6efe0', '#e8dcc3'), ph('夏夜2', '#dbeafe', '#7aa2e3')],
     coverUrl: ph('夏夜', '#f6efe0', '#e8dcc3'), tags: ['摄影', '夜晚'],
-    externalLink: null, techCode: null, reviewStatus: 'pass',
+    externalLink: null, techCode: null, reviewStatus: 'pass', isDraft: false,
     createdAt: '2026-08-04T12:00:00.000Z', updatedAt: '2026-08-04T12:00:00.000Z'
   },
   {
     id: 3003, title: '《云南摄影》', author: USERS[1003], type: 'image',
     textContent: null, mediaUrls: [ph('滇', '#dbeafe', '#7aa2e3')],
     coverUrl: ph('云南', '#dbeafe', '#7aa2e3'), tags: ['摄影', '旅行'],
-    externalLink: null, techCode: null, reviewStatus: 'pass',
+    externalLink: null, techCode: null, reviewStatus: 'pass', isDraft: false,
     createdAt: '2026-08-02T09:00:00.000Z', updatedAt: '2026-08-02T09:00:00.000Z'
   },
   {
     id: 3004, title: '《群星 CLI》', author: USERS[1004], type: 'tech',
     textContent: null, mediaUrls: [], coverUrl: ph('CLI', '#e9e5fb', '#8b83e8'), tags: ['开源', '工具'],
     externalLink: 'https://github.com/example/group-stars-cli', techCode: '```bash\n$ gs init\n$ gs publish --space ai\n```',
-    reviewStatus: 'pass', createdAt: '2026-07-28T09:00:00.000Z', updatedAt: '2026-07-28T09:00:00.000Z'
+    reviewStatus: 'pass', isDraft: false, createdAt: '2026-07-28T09:00:00.000Z', updatedAt: '2026-07-28T09:00:00.000Z'
   },
   {
     id: 3005, title: '《机器人实验》', author: USERS[1003], type: 'tech',
     textContent: null, mediaUrls: [], coverUrl: ph('机器', '#0ea5e9', '#0284c7'), tags: ['机器人', '实验'],
     externalLink: null, techCode: '```python\ndef robot():\n    return "hello"\n```',
-    reviewStatus: 'pass', createdAt: '2026-08-01T08:00:00.000Z', updatedAt: '2026-08-01T08:00:00.000Z'
+    reviewStatus: 'pass', isDraft: false, createdAt: '2026-08-01T08:00:00.000Z', updatedAt: '2026-08-01T08:00:00.000Z'
   },
   {
     id: 3006, title: '《夏夜的声音》', author: USERS[1001], type: 'audio_video',
     textContent: null, mediaUrls: ['cos://audio/summer-night.mp3'],
     coverUrl: ph('声', '#2b2a7a', '#6d5ae8'), tags: ['音乐', '原创'],
-    externalLink: null, techCode: null, reviewStatus: 'pass',
+    externalLink: null, techCode: null, reviewStatus: 'pass', isDraft: false,
     createdAt: '2026-08-05T14:00:00.000Z', updatedAt: '2026-08-05T14:00:00.000Z'
   },
   {
     id: 3007, title: '《Web 发展的十年》', author: USERS[1004], type: 'external',
     textContent: null, mediaUrls: [], coverUrl: ph('Web', '#f59e0b', '#d97706'), tags: ['文章', '外链'],
     externalLink: 'https://example.com/web-decade', techCode: null,
-    reviewStatus: 'pass', createdAt: '2026-08-06T02:00:00.000Z', updatedAt: '2026-08-06T02:00:00.000Z'
+    reviewStatus: 'pass', isDraft: false, createdAt: '2026-08-06T02:00:00.000Z', updatedAt: '2026-08-06T02:00:00.000Z'
   }
 ]
 

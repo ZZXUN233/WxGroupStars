@@ -5,6 +5,7 @@ import WorkCard from '../../components/WorkCard'
 import { useApp } from '../../store'
 import type { StarTrail, WorkType } from '../../types'
 import { getStarTrail } from '../../api'
+import { displayName, initial } from '../../utils/format'
 import { WORK_TYPE_EMOJI, WORK_TYPE_LABEL } from '../../utils/workType'
 import './index.scss'
 
@@ -21,7 +22,7 @@ export default function Profile() {
     const res = await getStarTrail(uid, sid || undefined)
     setTrail(res.data)
     if (res.data.user.id !== user?.id) {
-      Taro.setNavigationBarTitle({ title: `${res.data.user.nickname} · 星轨` })
+      Taro.setNavigationBarTitle({ title: `${displayName(res.data.user.nickname)} · 星轨` })
     }
   }
 
@@ -53,14 +54,35 @@ export default function Profile() {
     <ScrollView scrollY className='trail'>
       <View className='profile-head'>
         <View className='avatar profile-avatar'>
-          {trail.user.avatarUrl ? <Image src={trail.user.avatarUrl} mode='aspectFill' /> : null}
-          <Text>{trail.user.nickname.slice(0, 1)}</Text>
+          {trail.user.avatarUrl ? <Image src={trail.user.avatarUrl} mode='aspectFill' /> : <Text>{initial(trail.user.nickname)}</Text>}
         </View>
         <View className='profile-info'>
-          <View className='profile-name'>{trail.user.nickname}</View>
+          <View className='profile-name'>{displayName(trail.user.nickname)}</View>
           <View className='profile-stats'>累计发布 {trail.workCount} 件作品</View>
         </View>
       </View>
+
+      {/* 昵称未设置时引导同步微信资料（昵称仅首次设置，之后锁定） */}
+      {trail.user.id === user?.id && !user?.nickname ? (
+        <View className='profile-guide' onClick={() => Taro.navigateTo({ url: '/pages/edit-profile/index' })}>
+          <Text className='profile-guide-text'>👤 你还没设置昵称头像，点此同步微信资料</Text>
+          <Text className='profile-guide-arrow'>›</Text>
+        </View>
+      ) : null}
+
+      {/* 仅查看自己星轨时显示个人管理入口 */}
+      {trail.user.id === user?.id ? (
+        <View className='profile-entries'>
+          <View className='entry' onClick={() => Taro.navigateTo({ url: '/pages/edit-profile/index' })}>
+            <Text className='entry-label'>✏️ 编辑资料</Text>
+            <Text className='entry-arrow'>›</Text>
+          </View>
+          <View className='entry' onClick={() => Taro.navigateTo({ url: '/pages/drafts/index' })}>
+            <Text className='entry-label'>📝 我的草稿</Text>
+            <Text className='entry-arrow'>›</Text>
+          </View>
+        </View>
+      ) : null}
 
       <View className='section-title'>创作类型</View>
       <View className='dist-row card'>

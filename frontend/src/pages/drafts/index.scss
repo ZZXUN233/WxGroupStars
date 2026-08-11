@@ -1,0 +1,56 @@
+.drafts {
+  padding: 8px 24px 60px;
+}
+
+.draft-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 28px 24px;
+  margin-bottom: 16px;
+}
+
+.draft-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.draft-title {
+  display: block;
+  font-size: 30px;
+  font-weight: 600;
+  color: #1a2233;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.draft-chip {
+  font-size: 20px;
+  color: #4f46e5;
+  background: #eef0fd;
+  border: 1px solid #d9dcfb;
+  border-radius: 999px;
+  padding: 2px 14px;
+}
+
+.draft-time {
+  font-size: 22px;
+  color: #8b94a9;
+}
+
+.draft-edit {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: #4f46e5;
+}

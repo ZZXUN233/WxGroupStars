@@ -137,6 +137,11 @@ view, text, input, textarea, button, image, scroll-view, navigator, form {
     color: #fff;
     border-color: $brand;
   }
+  &.ghost {
+    background: #f4f5fa;
+    color: $ink-2;
+    border-color: $border;
+  }
   &.disabled {
     opacity: 0.5;
   }

@@ -117,6 +117,7 @@ model Work {
   tags         Json?        @db.Json
   reviewStatus ReviewStatus @default(pass) @map("review_status")
   isActive     Boolean      @default(true) @map("is_active")
+  isDraft      Boolean      @default(false) @map("is_draft")
   createdAt    DateTime     @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt    DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
 

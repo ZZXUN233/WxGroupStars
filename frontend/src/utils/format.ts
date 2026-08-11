@@ -16,7 +16,14 @@ export function dateTime(iso: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-/** 头像首字 */
-export function initial(nickname: string): string {
-  return nickname ? nickname.slice(0, 1) : '?'
+/** 昵称兜底：未设置（微信 code2session 不返回昵称，需用户主动填写）时显示占位 */
+export function displayName(nickname: string | null | undefined): string {
+  const n = (nickname || '').trim()
+  return n || '微信用户'
+}
+
+/** 头像占位首字：未设置昵称时显示「微」 */
+export function initial(nickname: string | null | undefined): string {
+  const n = (nickname || '').trim()
+  return n ? n.slice(0, 1) : '微'
 }

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { User } from '../types'
-import { login } from '../api'
+import { getMe } from '../api'
 
 interface AppState {
   /** 当前登录用户；未登录为 null */
@@ -17,8 +17,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const res = await login()
-      setUser(res.data.user)
+      // getMe 每次查后端最新资料，避免 login 的 lastSession 缓存导致昵称/头像过期
+      const res = await getMe()
+      setUser(res.data)
     } catch {
       setUser(null)
     } finally {

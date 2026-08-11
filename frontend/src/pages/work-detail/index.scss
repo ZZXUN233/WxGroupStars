@@ -102,6 +102,18 @@
   overflow-wrap: break-word;
 }
 
+/* 非图片类型的封面（图片类型首图已在滚动条中） */
+.detail-cover {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 24px;
+}
+
+/* 内容说明：文字类型即正文，其余类型为介绍/心得（Markdown 渲染） */
+.body-desc {
+  margin-top: 24px;
+}
+
 .image-strip {
   margin-top: 24px;
   white-space: nowrap;

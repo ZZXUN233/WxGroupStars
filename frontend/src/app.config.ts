@@ -6,7 +6,9 @@ export default defineAppConfig({
     'pages/work-detail/index',
     'pages/publish/index',
     'pages/search/index',
-    'pages/create-space/index'
+    'pages/create-space/index',
+    'pages/drafts/index',
+    'pages/edit-profile/index'
   ],
   window: {
     backgroundTextStyle: 'light',

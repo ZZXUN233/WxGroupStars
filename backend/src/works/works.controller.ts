@@ -8,6 +8,12 @@ import { WorksService } from './works.service'
 export class WorksController {
   constructor(private readonly worksService: WorksService) {}
 
+  // 静态路由需先于 :id 声明，否则 "drafts" 会被当作 id 捕获
+  @Get('drafts')
+  getMyDrafts(@CurrentUser() user: AuthUser) {
+    return this.worksService.getMyDrafts(user.id)
+  }
+
   @Get(':id')
   getDetail(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.worksService.getDetail(user.id, Number(id))

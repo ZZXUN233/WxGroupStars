@@ -8,6 +8,7 @@ describe('AuthService', () => {
     ({
       user: {
         create: jest.fn(),
+        findUnique: jest.fn(),
         findUniqueOrThrow: jest.fn(),
         update: jest.fn(),
       },
@@ -79,6 +80,19 @@ describe('AuthService', () => {
 
       expect(wechat.decryptGroupInfo).toHaveBeenCalledWith('real-session-key', 'ticket-1', 'ed', 'iv1')
       expect(result).toEqual({ openGid: 'oh-group-A' })
+    })
+  })
+
+  describe('me', () => {
+    it('返回当前用户最新资料（昵称/头像）', async () => {
+      const prisma = makePrisma()
+      prisma.user.findUniqueOrThrow.mockResolvedValue({ id: 1n, nickname: '最新昵称', avatarUrl: 'http://a/z.png' })
+
+      const svc = new AuthService(prisma, makeWechat())
+      const result = await svc.me(1)
+
+      expect(prisma.user.findUniqueOrThrow).toHaveBeenCalledWith({ where: { id: 1 } })
+      expect(result).toEqual({ id: 1, nickname: '最新昵称', avatarUrl: 'http://a/z.png' })
     })
   })
 

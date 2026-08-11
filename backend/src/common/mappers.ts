@@ -60,6 +60,7 @@ export function workToDto(w: Work & { author: User }): WorkDto {
     externalLink: w.externalLink,
     techCode: w.techCode,
     reviewStatus: w.reviewStatus as WorkDto['reviewStatus'],
+    isDraft: w.isDraft,
     createdAt: w.createdAt.toISOString(),
     updatedAt: w.updatedAt.toISOString(),
   }

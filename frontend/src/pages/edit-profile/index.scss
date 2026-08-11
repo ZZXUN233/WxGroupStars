@@ -1,0 +1,101 @@
+.edit-profile {
+  padding: 40px 24px 60px;
+}
+
+/* ---------- 头像选择（微信头像昵称填写） ---------- */
+.avatar-field {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+
+.avatar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent !important;
+  padding: 0;
+  border: none;
+  line-height: 1.4;
+  font-size: 24px;
+  color: #8b94a9;
+
+  &::after {
+    border: none;
+  }
+}
+
+.avatar-lg {
+  width: 144px;
+  height: 144px;
+  font-size: 56px;
+}
+
+.avatar-hint {
+  margin-top: 20px;
+}
+
+/* ---------- 昵称输入 ---------- */
+.field {
+  margin-bottom: 28px;
+}
+
+.field-label {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: #566075;
+  margin-bottom: 14px;
+}
+
+.field-input {
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 0 24px;
+  font-size: 28px;
+  line-height: 88px;
+  height: 88px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 昵称「点击填入」：非常驻输入框，点击才弹出微信昵称键盘，填入即收起 */
+.nickname-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 0 24px;
+  line-height: 88px;
+  height: 88px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nickname-btn-text {
+  font-size: 28px;
+  color: #1a2233;
+
+  &.placeholder {
+    color: #b6bdcb;
+  }
+}
+
+.nickname-btn-arrow {
+  font-size: 26px;
+  color: #8b94a9;
+}
+
+.field-hint {
+  font-size: 24px;
+  color: #8b94a9;
+  line-height: 1.6;
+  margin: 0 4px;
+}
+
+.submit {
+  margin-top: 48px;
+}

@@ -14,12 +14,15 @@
   margin-bottom: 14px;
 }
 
+/* 标题/链接/标签等单行输入：固定行高保证文本垂直居中、完整显示 */
 .field-input {
   background: #fff;
   border: 1px solid #e7e9f2;
   border-radius: 14px;
-  padding: 18px 24px;
+  padding: 0 24px;
   font-size: 28px;
+  line-height: 88px;
+  height: 88px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -47,6 +50,56 @@
   font-size: 22px;
   color: #8b94a9;
   margin-top: 10px;
+}
+
+/* 标签行 + 右侧 编辑/预览 切换 */
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+
+  .field-label {
+    margin-bottom: 0;
+  }
+}
+
+.preview-tabs {
+  display: flex;
+  background: #eef0fd;
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.preview-tab {
+  font-size: 22px;
+  color: #566075;
+  padding: 8px 24px;
+  border-radius: 999px;
+
+  &.on {
+    color: #fff;
+    background: #4f46e5;
+    font-weight: 600;
+  }
+}
+
+.preview-box {
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 24px;
+  min-height: 160px;
+}
+
+.preview-empty {
+  background: #f4f5fa;
+  border: 1px dashed #e7e9f2;
+  border-radius: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 24px;
+  color: #8b94a9;
 }
 
 /* ---------- 类型选择 ---------- */
@@ -167,6 +220,57 @@
   overflow-wrap: break-word;
 }
 
+/* ---------- 封面选择（非图片类型） ---------- */
+.cover-pick {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.cover-img {
+  width: 240px;
+  height: 160px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.cover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cover-btn {
+  font-size: 26px;
+  color: #4f46e5;
+
+  &.danger {
+    color: #d64545;
+  }
+}
+
+.cover-add {
+  height: 160px;
+  background: #eef0fd;
+  border: 1px dashed #d9dcfb;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #4f46e5;
+  font-size: 56px;
+
+  .cover-add-text {
+    font-size: 22px;
+    margin-top: 4px;
+  }
+}
+
 /* ---------- 群空间选择 ---------- */
 .space-row {
   display: flex;
@@ -191,6 +295,13 @@
 }
 
 /* ---------- 提交 ---------- */
-.submit {
+.btn-row {
+  display: flex;
+  gap: 16px;
   margin-top: 40px;
+}
+
+.submit-btn {
+  flex: 1;
+  margin-top: 0;
 }

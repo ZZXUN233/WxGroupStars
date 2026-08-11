@@ -5,10 +5,10 @@
  * 因此开发环境用持久化 devUid 作为 code，保证登录态跨启动稳定。
  */
 import Taro from '@tarojs/taro'
-import { get, post, put, del, setAuthHandler } from './http'
+import { get, post, put, patch, del, setAuthHandler } from './http'
 import type {
   ApiResult, Comment, CreateCommentInput, CreateSpaceInput, FeedItem, Member,
-  Page, PresignResult, Projection, Session, Space, StarTrail, TimelineSlice, UpsertWorkInput, Work,
+  Page, PresignResult, Projection, Session, Space, StarTrail, TimelineSlice, UpsertWorkInput, User, Work,
 } from '../types'
 
 function ok<T>(data: T): ApiResult<T> {
@@ -19,18 +19,14 @@ function ok<T>(data: T): ApiResult<T> {
 export const COS_BASE_URL = 'https://zzx-wxgs-1251818151.cos.ap-guangzhou.myqcloud.com'
 
 /**
- * 登录 code 获取。
- * 本地联调阶段（后端 dev 模式：WX_APPID/WX_SECRET 为空）用本机持久化 devUid，
- * 保证任何构建模式下登录态都稳定（避免 wx.login 单次 code 每次新建用户）。
- * ⚠️ 真实部署（配置真实 AppID 走微信 code2session）时，需改为 `const { code } = await Taro.login()`。
+ * 登录 code 获取：wx.login 真 code。
+ * 后端配置真实 WX_APPID/WX_SECRET 后，code 经 code2session 换真实 openid（真机独立身份）；
+ * 后端未配置凭据时进入 dev 模式，固定 DEV_OPENID 身份、与 code 内容无关，
+ * 因此任何构建模式直接用 Taro.login() 都安全（dev 身份稳定，真实模式才用真 code）。
  */
 async function getLoginCode(): Promise<string> {
-  let uid = Taro.getStorageSync('gs_dev_uid')
-  if (!uid) {
-    uid = Math.random().toString(36).slice(2, 10)
-    Taro.setStorageSync('gs_dev_uid', uid)
-  }
-  return uid
+  const { code } = await Taro.login()
+  return code
 }
 
 /* ---------------- 认证（自动登录兜底） ---------------- */
@@ -68,9 +64,19 @@ export async function login(): Promise<ApiResult<Session>> {
   return ok(await ensureLogin())
 }
 
+/** 当前用户最新资料（绕过 login 的 lastSession 缓存，进入编辑资料页时拉取最新昵称/头像） */
+export async function getMe(): Promise<ApiResult<User>> {
+  return ok(await get<User>('/auth/me'))
+}
+
 /** 群上下文解密（ADR-0008）：shareTicket → openGid，从群聊打开分享卡片时调用 */
 export async function getGroupInfo(shareTicket: string, encryptedData: string, iv: string): Promise<ApiResult<{ openGid: string }>> {
   return ok(await post<{ openGid: string }>('/auth/group-info', { shareTicket, encryptedData, iv }))
+}
+
+/** 更新昵称/头像（微信「头像昵称填写」，avatarUrl 为 COS 完整 URL；传 null 可清除头像） */
+export async function updateProfile(input: { nickname?: string; avatarUrl?: string | null }): Promise<ApiResult<User>> {
+  return ok(await patch<User>('/auth/profile', input))
 }
 
 /* ---------------- 群空间 ---------------- */
@@ -151,12 +157,17 @@ export async function publishWork(input: UpsertWorkInput): Promise<ApiResult<Wor
 }
 
 export async function editWork(id: number, input: UpsertWorkInput): Promise<ApiResult<Work>> {
-  return ok(await put<Work>(`/works/${id}`, input))
+  return ok(await patch<Work>(`/works/${id}`, input))
 }
 
 export async function deleteWork(id: number): Promise<ApiResult<null>> {
   await del(`/works/${id}`)
   return ok(null)
+}
+
+/** 我的草稿列表（最新在前），供「我的草稿」入口继续编辑 */
+export async function getMyDrafts(): Promise<ApiResult<Work[]>> {
+  return ok(await get<Work[]>('/works/drafts'))
 }
 
 export async function addProjection(workId: number, spaceId: number): Promise<ApiResult<Projection>> {
