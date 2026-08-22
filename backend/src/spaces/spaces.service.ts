@@ -35,11 +35,11 @@ export class SpacesService {
 
   async getMine(userId: number): Promise<SpaceDto[]> {
     const members = await this.prisma.member.findMany({
-      where: { userId, isActive: true },
+      where: { userId, isActive: true, status: 'active' },
       include: {
         space: {
           include: {
-            members: { where: { isActive: true, status: 'active' } },
+            members: { where: { isActive: true, status: { in: ['active', 'pending'] } } },
             projections: { where: { isActive: true }, select: { id: true } },
           },
         },
@@ -49,8 +49,11 @@ export class SpacesService {
     return members.map((m) =>
       spaceToDto(m.space, {
         myRole: m.role as MemberRole,
-        memberCount: m.space.members.length,
+        memberCount: m.space.members.filter((member) => member.status === 'active').length,
         workCount: m.space.projections.length,
+        pendingCount: m.role === 'owner' || m.role === 'admin'
+          ? m.space.members.filter((member) => member.status === 'pending').length
+          : 0,
       }),
     )
   }
@@ -62,7 +65,10 @@ export class SpacesService {
       this.prisma.member.count({ where: { spaceId, isActive: true, status: 'active' } }),
       this.prisma.projection.count({ where: { spaceId, isActive: true } }),
     ])
-    return spaceToDto(space, { myRole: me.role as MemberRole, memberCount, workCount })
+    const pendingCount = me.role === 'owner' || me.role === 'admin'
+      ? await this.prisma.member.count({ where: { spaceId, isActive: true, status: 'pending' } })
+      : 0
+    return spaceToDto(space, { myRole: me.role as MemberRole, memberCount, workCount, pendingCount })
   }
 
   async getMembers(userId: number, spaceId: number): Promise<MemberDto[]> {

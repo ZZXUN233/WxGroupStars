@@ -52,6 +52,7 @@ export interface Space {
   creatorId: number
   memberCount: number
   workCount: number
+  pendingCount?: number
   myRole: MemberRole
   createdAt: string
 }

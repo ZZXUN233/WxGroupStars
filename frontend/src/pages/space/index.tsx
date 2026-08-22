@@ -66,6 +66,25 @@ export default function Space() {
   const goPublish = () => Taro.navigateTo({ url: `/pages/publish/index?spaceId=${spaceId}` })
   const goSearch = () => Taro.navigateTo({ url: `/pages/search/index?spaceId=${spaceId}` })
 
+  const openMemberRequests = async () => {
+    if (!space) return
+    const requests = await getMemberRequests(space.id)
+    if (!requests.data.length) {
+      Taro.showToast({ title: '暂无待审核申请', icon: 'none' })
+      return
+    }
+    const request = requests.data[0]
+    const result = await Taro.showModal({
+      title: '加入申请',
+      content: `${displayName(request.user.nickname)} 申请加入该群空间，是否通过？`,
+      confirmText: '通过',
+      cancelText: '拒绝',
+    })
+    await reviewMember(space.id, request.id, result.confirm)
+    Taro.showToast({ title: result.confirm ? '已通过' : '已拒绝', icon: 'success' })
+    load(space.id, slice)
+  }
+
   // 群空间分享卡片：群友在群内打开 → 门禁自动加入（ADR-0008）
   useShareAppMessage(() => ({
     title: space ? `${space.name} · 群星闪耀` : '群星闪耀',
@@ -153,7 +172,10 @@ export default function Space() {
 
       <View className='section-title member-section-title'>
         <Text>群成员</Text>
-        {space && <Text className='invite-member-btn' onClick={() => Taro.navigateTo({ url: `/pages/space-invite/index?spaceId=${space.id}` })}>＋</Text>}
+        {space && <View className='member-actions'>
+          {canManage ? <Text className='member-action-btn' onClick={openMemberRequests}>审核申请</Text> : null}
+          <Text className='member-action-btn invite-member-btn' onClick={() => Taro.navigateTo({ url: `/pages/space-invite/index?spaceId=${space.id}` })}>＋ 邀请成员</Text>
+        </View>}
       </View>
       <View className='member-list card'>
         {members.map((m) => (

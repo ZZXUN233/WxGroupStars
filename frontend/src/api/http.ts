@@ -6,7 +6,7 @@
 import Taro from '@tarojs/taro'
 import type { ApiResult } from '../types'
 
-// 本地联调：微信开发者工具需勾选「不校验合法域名、web-view、TLS 版本以及 HTTPS 证书」；
+// 本地联调默认访问 http://localhost:3000；微信开发者工具需勾选「不校验合法域名、web-view、TLS 版本以及 HTTPS 证书」；
 // 真机联调用局域网 IP（本机 WLAN 192.168.31.80），真机需与开发机同网段；
 // 正式上线使用 gs.zzxun.cn 作为 API 域名（ADR-0013）。
 // 注：小程序运行时没有 process，勿在此用 process.env 注入。

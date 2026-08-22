@@ -88,7 +88,7 @@ export function projectionToDto(
 
 export function spaceToDto(
   s: Pick<Space, 'id' | 'name' | 'creatorId' | 'coverUrl' | 'createdAt'>,
-  opts: { myRole: MemberRole | null; memberCount: number; workCount: number },
+  opts: { myRole: MemberRole | null; memberCount: number; workCount: number; pendingCount?: number },
 ): SpaceDto {
   return {
     id: Number(s.id),
@@ -97,6 +97,7 @@ export function spaceToDto(
     creatorId: Number(s.creatorId),
     memberCount: opts.memberCount,
     workCount: opts.workCount,
+    pendingCount: opts.pendingCount ?? 0,
     myRole: opts.myRole ?? 'member',
     createdAt: s.createdAt.toISOString(),
   }

@@ -127,6 +127,34 @@
   padding: 16px 24px;
 }
 
+.member-section-title {
+  justify-content: space-between;
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.member-action-btn {
+  font-size: 22px;
+  font-weight: 600;
+  color: #4f46e5;
+  background: #eef0fd;
+  border: 1px solid #d9dcfb;
+  border-radius: 999px;
+  padding: 6px 14px;
+  white-space: nowrap;
+}
+
+.invite-member-btn {
+  color: #fff;
+  background: #4f46e5;
+  border-color: #4f46e5;
+}
+
 .member-item {
   width: 25%;
   display: flex;

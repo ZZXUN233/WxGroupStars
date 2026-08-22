@@ -37,7 +37,10 @@ export default function Index() {
       <View className='space-list'>
         {spaces.map((s) => (
           <View key={s.id} className='card space-card' onClick={() => goSpace(s.id)}>
-            <View className='space-logo'>⭐</View>
+            <View className='space-logo-wrap'>
+              <View className='space-logo'>⭐</View>
+              {s.pendingCount ? <Text className='pending-badge'>{s.pendingCount > 99 ? '99+' : s.pendingCount}</Text> : null}
+            </View>
             <View className='space-info'>
               <View className='space-name'>{s.name}</View>
               <View className='space-meta'>{s.workCount} 作品 · {s.memberCount} 成员</View>

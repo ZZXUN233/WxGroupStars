@@ -56,6 +56,7 @@ export interface SpaceDto {
   creatorId: number
   memberCount: number
   workCount: number
+  pendingCount: number
   myRole: MemberRole
   createdAt: string
 }

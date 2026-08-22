@@ -12,7 +12,7 @@ import './index.scss'
 const TYPES: WorkType[] = ['text', 'image', 'audio_video', 'tech', 'external']
 
 export default function Profile() {
-  const { user } = useApp()
+  const { user, refreshUser } = useApp()
   const [userId, setUserId] = useState(0)
   const [spaceId, setSpaceId] = useState(0)
   const [trail, setTrail] = useState<StarTrail | null>(null)
@@ -35,8 +35,11 @@ export default function Profile() {
   })
 
   // tab 切换回来时刷新
-  useDidShow(() => {
-    if (userId) loadTrail(userId, spaceId)
+  useDidShow(async () => {
+    if (userId) {
+      if (userId === user?.id) await refreshUser()
+      await loadTrail(userId, spaceId)
+    }
   })
 
   // 兜底：tab 进入时 user 尚未就绪（store 异步登录），就绪后加载自己的星轨

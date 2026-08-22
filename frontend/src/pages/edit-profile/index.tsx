@@ -57,10 +57,13 @@ export default function EditProfile() {
         await uploadToCos(avatar, presign)
         avatarUrl = `${COS_BASE_URL}/${presign.key}`
       }
-      await updateProfile({ nickname: name, avatarUrl })
+      const saved = await updateProfile({ nickname: name, avatarUrl })
+      if (saved.data.nickname !== name || saved.data.avatarUrl !== avatarUrl) {
+        throw new Error('后端返回的用户资料未生效')
+      }
       await refreshUser() // 刷新全局用户态（星轨页、首页作者展示）
       Taro.showToast({ title: '已保存', icon: 'success' })
-      setTimeout(() => Taro.navigateBack(), 500)
+      setTimeout(() => Taro.navigateBack({ delta: 1 }), 500)
     } catch (err) {
       const message = err instanceof Error ? err.message : typeof err === 'string' ? err : '保存失败，请重试'
       Taro.showToast({ title: message.slice(0, 32), icon: 'none' })

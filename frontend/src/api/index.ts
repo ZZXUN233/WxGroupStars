@@ -151,11 +151,12 @@ export async function getPresign(filename: string): Promise<ApiResult<PresignRes
   return ok(await post<PresignResult>('/uploads/presign', { filename }))
 }
 
-/** 直传 COS：multipart/form-data POST（Taro.uploadFile 默认 POST），204/200 为成功 */
+/** 直传 COS：multipart/form-data POST（COS 成功响应可能是 200、201 或 204） */
 export async function uploadToCos(filePath: string, presign: PresignResult): Promise<void> {
   const res = await Taro.uploadFile({ url: presign.url, filePath, name: 'file', formData: presign.fields })
-  if (res.statusCode !== 200 && res.statusCode !== 204) {
-    throw new Error(`上传失败（HTTP ${res.statusCode}）`)
+  if (res.statusCode < 200 || res.statusCode >= 300) {
+    const detail = typeof res.data === 'string' && res.data ? `：${res.data.slice(0, 80)}` : ''
+    throw new Error(`头像上传失败（HTTP ${res.statusCode}${detail}）`)
   }
 }
 

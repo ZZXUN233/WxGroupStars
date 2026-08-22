@@ -3,7 +3,9 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import devConfig from './dev'
 import prodConfig from './prod'
 
-const apiBaseUrl = process.env.TARO_APP_BASE_URL || 'https://gs.zzxun.cn'
+// 用明确的 TARO_APP_ENV 选择 API，避免终端残留 NODE_ENV 导致本地构建误连生产。
+const isLocalBuild = process.env.TARO_APP_ENV === 'local' || process.env.NODE_ENV === 'development'
+const apiBaseUrl = process.env.TARO_APP_BASE_URL || (isLocalBuild ? 'http://localhost:3000' : 'https://gs.zzxun.cn')
 
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig<'webpack5'>(async (merge) => {
