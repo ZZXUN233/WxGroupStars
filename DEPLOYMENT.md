@@ -47,7 +47,7 @@ H5 产物位于 `frontend/dist`，脚本会复制到 `/var/www/group-stars`。�
 nginx -t && nginx -s reload
 ```
 
-配置默认使用 `https://gs.zzxun.cn` 托管 H5，并使用 `https://api.zzxun.cn` 作为独立 API 子域名。API 子域名直接反代到容器，应用自身仍保留 `/group-stars` 全局前缀，因此前端地址为 `https://api.zzxun.cn/group-stars`；没有在 H5 站点下做路径代理。
+配置使用 `https://gs.zzxun.cn` 托管 H5，同时供微信小程序访问 `https://gs.zzxun.cn/group-stars`；H5 页面接口使用独立的 `https://api.zzxun.cn/group-stars`。Nginx 中 `gs` 站点的 `/group-stars/` 反代到远程宿主机 `127.0.0.1:3007`，再转发到容器 `3000`。
 
 ## 常用命令
 
