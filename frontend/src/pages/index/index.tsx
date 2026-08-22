@@ -1,6 +1,6 @@
 import { Text, View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Space } from '../../types'
 import { getFeed, getMySpaces } from '../../api'
@@ -10,19 +10,32 @@ export default function Index() {
   const [spaces, setSpaces] = useState<Space[]>([])
   const [feed, setFeed] = useState<{ projection: any; space: { id: number; name: string } }[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const loadingRef = useRef(false)
+  const hasLoadedRef = useRef(false)
 
   const load = async () => {
+    if (loadingRef.current) return
+    loadingRef.current = true
     setLoading(true)
+    setLoadError('')
     try {
       const [sp, fd] = await Promise.all([getMySpaces(), getFeed()])
       setSpaces(sp.data)
       setFeed(fd.data.items)
+      hasLoadedRef.current = true
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : '加载失败，请点击刷新重试')
     } finally {
+      loadingRef.current = false
       setLoading(false)
     }
   }
 
-  useDidShow(() => { load() })
+  useEffect(() => { load() }, [])
+  useDidShow(() => {
+    if (hasLoadedRef.current) load()
+  })
 
   const goSpace = (id: number) => Taro.navigateTo({ url: `/pages/space/index?id=${id}` })
   const goCreate = () => Taro.navigateTo({ url: '/pages/create-space/index' })
@@ -56,7 +69,7 @@ export default function Index() {
         最新星光
         <Text className={`title-right refresh-action ${loading ? 'loading' : ''}`} onClick={load}>↻ 刷新</Text>
       </View>
-      {loading ? <View className='empty'>加载中…</View> : (
+      {loading ? <View className='empty'>加载中…</View> : loadError ? <View className='empty'>{loadError}</View> : (
         feed.length ? feed.map((item) => (
           <WorkCard key={item.projection.id} projection={item.projection} spaceName={item.space.name} />
         )) : <View className='empty'>还没有星光，快发布第一件作品吧</View>
