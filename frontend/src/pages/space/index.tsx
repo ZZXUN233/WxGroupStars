@@ -3,7 +3,7 @@ import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
 import { useMemo, useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Member, Projection, Space, TimelineSlice } from '../../types'
-import { getMemberRequests, getSpaceAccessInfo, getSpaceDetail, getSpaceMembers, getSpaceTimeline, joinSpace, reviewMember, transferOwner, updateSpace } from '../../api'
+import { getMemberRequests, getSpaceAccessInfo, getSpaceDetail, getSpaceMembers, getSpaceTimeline, joinSpace, leaveSpace, removeSpaceMember, reviewMember, setSpaceAdmin, transferOwner, updateSpace } from '../../api'
 import { displayName, initial } from '../../utils/format'
 import type { SpaceAccessInfo } from '../../types'
 import './index.scss'
@@ -25,6 +25,8 @@ export default function Space() {
   const [spaceId, setSpaceId] = useState<number>(0)
   const [space, setSpace] = useState<Space | null>(null)
   const [members, setMembers] = useState<Member[]>([])
+  const [pendingMembers, setPendingMembers] = useState<Member[]>([])
+  const [memberTab, setMemberTab] = useState<'members' | 'pending'>('members')
   const [accessInfo, setAccessInfo] = useState<SpaceAccessInfo | null>(null)
   const [applying, setApplying] = useState(false)
   const [slice, setSlice] = useState<TimelineSlice>('month')
@@ -97,23 +99,45 @@ export default function Space() {
   const goPublish = () => Taro.navigateTo({ url: `/pages/publish/index?spaceId=${spaceId}` })
   const goSearch = () => Taro.navigateTo({ url: `/pages/search/index?spaceId=${spaceId}` })
 
-  const openMemberRequests = async () => {
+  const loadPendingMembers = async () => {
     if (!space) return
     const requests = await getMemberRequests(space.id)
-    if (!requests.data.length) {
-      Taro.showToast({ title: '暂无待审核申请', icon: 'none' })
-      return
-    }
-    const request = requests.data[0]
-    const result = await Taro.showModal({
-      title: '加入申请',
-      content: `${displayName(request.user.nickname)} 申请加入该群空间，是否通过？`,
-      confirmText: '通过',
-      cancelText: '拒绝',
-    })
-    await reviewMember(space.id, request.id, result.confirm)
-    Taro.showToast({ title: result.confirm ? '已通过' : '已拒绝', icon: 'success' })
-    load(space.id, slice)
+    setPendingMembers(requests.data)
+  }
+
+  const reviewRequest = async (request: Member, approved: boolean) => {
+    if (!space) return
+    await reviewMember(space.id, request.id, approved)
+    setPendingMembers((list) => list.filter((item) => item.id !== request.id))
+    Taro.showToast({ title: approved ? '已通过' : '已拒绝', icon: 'success' })
+  }
+
+  const manageMember = (member: Member) => {
+    if (!space || space.myRole !== 'owner' || member.role === 'owner') return
+    const isAdmin = member.role === 'admin'
+    Taro.showActionSheet({ itemList: [isAdmin ? '撤销管理员' : '设为管理员', '踢出群空间'] }).then(async (result) => {
+      if (result.tapIndex === 0) {
+        await setSpaceAdmin(space.id, member.user.id, !isAdmin)
+        setMembers((list) => list.map((item) => item.id === member.id ? { ...item, role: isAdmin ? 'member' : 'admin' } : item))
+        Taro.showToast({ title: isAdmin ? '已撤销管理员' : '已设为管理员', icon: 'success' })
+      } else if (result.tapIndex === 1) {
+        const confirmed = await Taro.showModal({ title: '踢出成员', content: `确定将${displayName(member.user.nickname)}移出群空间吗？` })
+        if (confirmed.confirm) {
+          await removeSpaceMember(space.id, member.user.id)
+          setMembers((list) => list.filter((item) => item.id !== member.id))
+          Taro.showToast({ title: '已移出群空间', icon: 'success' })
+        }
+      }
+    }).catch(() => undefined)
+  }
+
+  const leaveCurrentSpace = async () => {
+    if (!space || space.myRole === 'owner') return
+    const confirmed = await Taro.showModal({ title: '退出群空间', content: '退出后将无法查看群内作品，确定退出吗？' })
+    if (!confirmed.confirm) return
+    await leaveSpace(space.id)
+    Taro.showToast({ title: '已退出', icon: 'success' })
+    setTimeout(() => Taro.navigateBack(), 500)
   }
 
   // 群空间分享卡片：群友在群内打开 → 门禁自动加入（ADR-0008）
@@ -239,20 +263,33 @@ export default function Space() {
       <View className='section-title member-section-title'>
         <Text>群成员</Text>
         {space && <View className='member-actions'>
-          {canManage ? <Text className='member-action-btn' onClick={openMemberRequests}>审核申请</Text> : null}
+          {space.myRole !== 'owner' ? <Text className='member-action-btn' onClick={leaveCurrentSpace}>退出</Text> : null}
           <Text className='member-action-btn invite-member-btn' onClick={() => Taro.navigateTo({ url: `/pages/space-invite/index?spaceId=${space.id}` })}>＋ 邀请成员</Text>
         </View>}
       </View>
+      {canManage ? (
+        <View className='member-tabs'>
+          <Text className={`member-tab ${memberTab === 'members' ? 'active' : ''}`} onClick={() => setMemberTab('members')}>正式成员</Text>
+          <Text className={`member-tab ${memberTab === 'pending' ? 'active' : ''}`} onClick={() => { setMemberTab('pending'); loadPendingMembers() }}>待审核 {space.pendingCount ? `(${space.pendingCount})` : ''}</Text>
+        </View>
+      ) : null}
       <View className='member-list card'>
-        {members.map((m) => (
-          <View key={m.id} className='member-item' onClick={() => goMember(m)}>
+        {(memberTab === 'pending' && canManage ? pendingMembers : members).map((m) => (
+          <View key={m.id} className='member-item' onClick={() => memberTab === 'members' && goMember(m)}>
             <View className='avatar'>
               {m.user.avatarUrl ? <Image src={m.user.avatarUrl} mode='aspectFill' /> : <Text>{initial(m.user.nickname)}</Text>}
             </View>
             <View className='member-name'>
               <Text>{displayName(m.user.nickname)}</Text>
               {m.role === 'owner' ? <Text className='role-tag'>群主</Text> : null}
+              {m.role === 'admin' ? <Text className='role-tag'>管理员</Text> : null}
             </View>
+            {memberTab === 'pending' && canManage ? (
+              <View className='request-actions'>
+                <Text className='request-btn approve' onClick={(event) => { event.stopPropagation(); reviewRequest(m, true) }}>通过</Text>
+                <Text className='request-btn reject' onClick={(event) => { event.stopPropagation(); reviewRequest(m, false) }}>拒绝</Text>
+              </View>
+            ) : null}
           </View>
         ))}
       </View>

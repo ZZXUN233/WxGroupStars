@@ -14,6 +14,7 @@ describe('SpacesService', () => {
         findMany: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
         count: jest.fn(),
       },
       space: {
@@ -240,6 +241,36 @@ describe('SpacesService', () => {
       const svc = new SpacesService(prisma)
 
       await expect(svc.update(2, 1, { name: 'x' })).rejects.toBeInstanceOf(ForbiddenException)
+    })
+
+    it('owner 可设置成员为管理员', async () => {
+      const prisma = makePrisma()
+      const target = { ...memberRow, status: 'active', joinedAt: new Date(), user: { id: 2n, nickname: '成员', avatarUrl: null } }
+      prisma.member.findUnique.mockResolvedValueOnce(owner).mockResolvedValueOnce(target)
+      prisma.member.update.mockResolvedValue({ ...target, role: 'admin' })
+      const svc = new SpacesService(prisma)
+
+      await expect(svc.setAdmin(1, 1, 2, true)).resolves.toMatchObject({ id: 2, role: 'admin' })
+      expect(prisma.member.update).toHaveBeenCalledWith({
+        where: { id: 2n }, data: { role: 'admin' }, include: { user: true },
+      })
+    })
+
+    it('普通成员不能设置管理员', async () => {
+      const prisma = makePrisma()
+      prisma.member.findUnique.mockResolvedValue(memberRow)
+      const svc = new SpacesService(prisma)
+
+      await expect(svc.setAdmin(2, 1, 3, true)).rejects.toBeInstanceOf(ForbiddenException)
+    })
+
+    it('群主不能直接退出空间', async () => {
+      const prisma = makePrisma()
+      prisma.member.findUnique.mockResolvedValue(owner)
+      const svc = new SpacesService(prisma)
+
+      await expect(svc.leave(1, 1)).rejects.toBeInstanceOf(BadRequestException)
+      expect(prisma.member.update).not.toHaveBeenCalled()
     })
   })
 })

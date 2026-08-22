@@ -126,6 +126,20 @@ export async function transferOwner(spaceId: number, memberId: number): Promise<
   return ok(await post<Space>(`/spaces/${spaceId}/transfer-owner`, { memberId }))
 }
 
+export async function setSpaceAdmin(spaceId: number, memberId: number, admin: boolean): Promise<ApiResult<Member>> {
+  return ok(await post<Member>(`/spaces/${spaceId}/members/${memberId}/admin`, { admin }))
+}
+
+export async function removeSpaceMember(spaceId: number, memberId: number): Promise<ApiResult<null>> {
+  await del(`/spaces/${spaceId}/members/${memberId}`)
+  return ok(null)
+}
+
+export async function leaveSpace(spaceId: number): Promise<ApiResult<null>> {
+  await del(`/spaces/${spaceId}/membership`)
+  return ok(null)
+}
+
 export async function joinSpace(spaceId: number, openGid?: string): Promise<ApiResult<JoinResult>> {
   return ok(await post<JoinResult>(`/spaces/${spaceId}/join`, openGid ? { openGid } : {}))
 }

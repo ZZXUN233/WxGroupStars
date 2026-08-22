@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator'
+import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator'
 import type { TimelineSlice } from '../types/api'
 
 export class CreateSpaceDto {
@@ -29,6 +29,11 @@ export class UpdateSpaceDto {
 export class TransferOwnerDto {
   @IsInt()
   memberId: number
+}
+
+export class SetAdminDto {
+  @IsBoolean()
+  admin: boolean
 }
 
 export class JoinSpaceDto {

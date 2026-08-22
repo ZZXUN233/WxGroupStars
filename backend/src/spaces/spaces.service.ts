@@ -179,9 +179,49 @@ export class SpacesService {
     await this.prisma.$transaction([
       this.prisma.member.update({ where: { id: owner.id }, data: { role: 'member' } }),
       this.prisma.member.update({ where: { id: target.id }, data: { role: 'owner' } }),
+      this.prisma.member.updateMany({ where: { spaceId, role: 'admin', isActive: true }, data: { role: 'member' } }),
       this.prisma.space.update({ where: { id: spaceId }, data: { creatorId: memberId } }),
     ])
     return this.getDetail(userId, spaceId)
+  }
+
+  /** 管理员任命与撤销仅限群主，不能作用于群主本人。 */
+  async setAdmin(userId: number, spaceId: number, memberId: number, admin: boolean): Promise<MemberDto> {
+    await this.requireOwner(userId, spaceId)
+    const target = await this.prisma.member.findUnique({
+      where: { uk_space_user: { spaceId, userId: memberId } },
+      include: { user: true },
+    })
+    if (!target || !target.isActive || target.status !== 'active' || target.role === 'owner') {
+      throw new BadRequestException('只能设置正式成员')
+    }
+    const member = await this.prisma.member.update({
+      where: { id: target.id },
+      data: { role: admin ? 'admin' : 'member' },
+      include: { user: true },
+    })
+    return memberToDto(member)
+  }
+
+  /** 群主踢出成员，采用软删除，保留其历史投影与互动数据。 */
+  async removeMember(userId: number, spaceId: number, memberId: number): Promise<null> {
+    await this.requireOwner(userId, spaceId)
+    const target = await this.prisma.member.findUnique({
+      where: { uk_space_user: { spaceId, userId: memberId } },
+    })
+    if (!target || !target.isActive || target.status !== 'active' || target.role === 'owner') {
+      throw new BadRequestException('目标成员不在群内')
+    }
+    await this.prisma.member.update({ where: { id: target.id }, data: { isActive: false } })
+    return null
+  }
+
+  /** 普通成员/管理员主动退出；群主需先转让群主后才能退出。 */
+  async leave(userId: number, spaceId: number): Promise<null> {
+    const member = await this.requireMember(userId, spaceId)
+    if (member.role === 'owner') throw new BadRequestException('群主需先转让群主后才能退出')
+    await this.prisma.member.update({ where: { id: member.id }, data: { isActive: false } })
+    return null
   }
 
   /**

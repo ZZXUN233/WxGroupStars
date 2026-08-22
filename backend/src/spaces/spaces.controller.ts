@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
 import { CurrentUser } from '../common/decorators/current-user.decorator'
 import type { AuthUser } from '../common/decorators/current-user.decorator'
 import { SpacesService } from './spaces.service'
-import { CreateSpaceDto, JoinSpaceDto, SearchQueryDto, TimelineQueryDto, TransferOwnerDto, UpdateSpaceDto } from './dto'
+import { CreateSpaceDto, JoinSpaceDto, SearchQueryDto, SetAdminDto, TimelineQueryDto, TransferOwnerDto, UpdateSpaceDto } from './dto'
 
 @Controller('spaces')
 export class SpacesController {
@@ -36,6 +36,21 @@ export class SpacesController {
   @Post(':id/transfer-owner')
   transferOwner(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: TransferOwnerDto) {
     return this.spacesService.transferOwner(user.id, Number(id), dto.memberId)
+  }
+
+  @Post(':id/members/:memberId/admin')
+  setAdmin(@CurrentUser() user: AuthUser, @Param('id') id: string, @Param('memberId') memberId: string, @Body() dto: SetAdminDto) {
+    return this.spacesService.setAdmin(user.id, Number(id), Number(memberId), dto.admin)
+  }
+
+  @Delete(':id/members/:memberId')
+  removeMember(@CurrentUser() user: AuthUser, @Param('id') id: string, @Param('memberId') memberId: string) {
+    return this.spacesService.removeMember(user.id, Number(id), Number(memberId))
+  }
+
+  @Delete(':id/membership')
+  leave(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.spacesService.leave(user.id, Number(id))
   }
 
   @Post(':id/join')
