@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${ROOT_DIR}"
 
-API_PORT="${API_PORT:-3000}"
+API_PORT="${API_PORT:-3007}"
 STATIC_DIR="${STATIC_DIR:-/var/www/group-stars}"
 
 if command -v docker >/dev/null 2>&1; then

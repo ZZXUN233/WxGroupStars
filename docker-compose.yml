@@ -7,7 +7,7 @@ services:
     env_file:
       - ./backend/.env
     ports:
-      - "${API_PORT:-3000}:3000"
+      - "${API_PORT:-3007}:3000"
     # 支持数据库运行在 Docker 宿主机（本地 WSL 或远程 Linux 服务器）。
     extra_hosts:
       - "host.docker.internal:host-gateway"
