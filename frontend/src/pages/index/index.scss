@@ -85,3 +85,9 @@
   font-weight: 400;
   color: #4f46e5;
 }
+
+.refresh-action {
+  &.loading {
+    color: #8b94a9;
+  }
+}

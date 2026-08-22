@@ -1,12 +1,17 @@
 import { Image, Text, View } from '@tarojs/components'
-import type { Work } from '../types'
+import Taro from '@tarojs/taro'
+import type { StarTrailWork } from '../types'
 import { displayName, initial } from '../utils/format'
 import { WORK_TYPE_EMOJI, WORK_TYPE_LABEL } from '../utils/workType'
 import './WorkCard.scss'
 
-export default function StarTrailWorkCard({ work }: { work: Work }) {
+export default function StarTrailWorkCard({ work }: { work: StarTrailWork }) {
+  const goDetail = () => {
+    Taro.navigateTo({ url: `/pages/work-detail/index?projectionId=${work.projectionId}&spaceId=${work.spaceId}` })
+  }
+
   return (
-    <View className='work-card card'>
+    <View className='work-card card' onClick={goDetail}>
       {work.coverUrl ? (
         <Image className='work-cover' src={work.coverUrl} mode='aspectFill' />
       ) : (

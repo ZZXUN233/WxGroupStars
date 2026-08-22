@@ -1,15 +1,15 @@
-import { Button, Image, Input, ScrollView, Text, Video, View } from '@tarojs/components'
+import { Button, Image, Input, ScrollView, Text, Textarea, Video, View } from '@tarojs/components'
 import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
 import { useEffect, useMemo, useState } from 'react'
 import CommentList from '../../components/CommentList'
 import Markdown from '../../components/Markdown'
 import { useApp } from '../../store'
-import type { Comment, Projection, Space } from '../../types'
+import type { Comment, Projection, Space, WorkDetail } from '../../types'
 import { dateTime, displayName, initial } from '../../utils/format'
 import { WORK_TYPE_LABEL } from '../../utils/workType'
 import {
   addProjection, createComment, deleteComment, deleteWork, getComments, getMySpaces,
-  getProjection, revokeProjection, toggleLike
+  getProjection, getWork, revokeProjection, toggleLike
 } from '../../api'
 import './index.scss'
 
@@ -22,7 +22,7 @@ const isAudioUrl = (u: string) => /\.(mp3|m4a|wav|aac|flac|ogg)(\?|$)/i.test(u)
  * 临时文件（微信会强制注入 servicewechat.com Referer，已在 COS 防盗链白名单内，实测 206），
  * 再播本地路径，绕开防盗链。
  */
-function useLocalMedia(url: string | undefined): { src: string; loading: boolean; error: string } {
+function useLocalMedia(url: string | undefined, enabled = true): { src: string; loading: boolean; error: string } {
   const [src, setSrc] = useState(url || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -31,6 +31,10 @@ function useLocalMedia(url: string | undefined): { src: string; loading: boolean
     let cancelled = false
     if (!url) {
       setSrc(''); setLoading(false); setError('')
+      return
+    }
+    if (!enabled) {
+      setSrc(url); setLoading(false); setError('')
       return
     }
     // 本地文件直接用，无需下载
@@ -48,21 +52,21 @@ function useLocalMedia(url: string | undefined): { src: string; loading: boolean
       .catch(() => { if (!cancelled) setError('媒体下载失败，请稍后重试') })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [url])
+  }, [url, enabled])
 
   return { src, loading, error }
 }
 
 /** 音频播放器：createInnerAudioContext 编程式播放（微信 audio 组件已废弃） */
-function AudioPlayer({ src }: { src: string }) {
+function AudioPlayer({ src, onError }: { src: string; onError?: () => void }) {
   const [playing, setPlaying] = useState(false)
   const ctx = useMemo(() => {
     const c = Taro.createInnerAudioContext()
     c.src = src
     c.onEnded(() => setPlaying(false))
-    c.onError(() => setPlaying(false))
+    c.onError(() => { setPlaying(false); onError?.() })
     return c
-  }, [src])
+  }, [src, onError])
 
   useEffect(() => () => ctx.destroy(), [ctx])
 
@@ -90,8 +94,10 @@ function AudioPlayer({ src }: { src: string }) {
 export default function WorkDetail() {
   const { user } = useApp()
   const [projection, setProjection] = useState<Projection | null>(null)
+  const [workDetail, setWorkDetail] = useState<WorkDetail | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [input, setInput] = useState('')
+  const [commentFullscreen, setCommentFullscreen] = useState(false)
   const [replyTarget, setReplyTarget] = useState<{ parentId?: number; replyToUserId?: number; label: string } | null>(null)
   const [projectionId, setProjectionId] = useState(0)
   const [spaceId, setSpaceId] = useState(0)
@@ -109,9 +115,11 @@ export default function WorkDetail() {
   }))
 
   const load = async (pid: number) => {
-    const [p, c] = await Promise.all([getProjection(pid), getComments(pid)])
+    const p = await getProjection(pid)
+    const [c, w] = await Promise.all([getComments(pid), getWork(p.data.work.id)])
     setProjection(p.data)
     setComments(c.data)
+    setWorkDetail(w.data)
   }
 
   const isAuthor = !!projection && user?.id === projection.work.author.id
@@ -154,6 +162,7 @@ export default function WorkDetail() {
     if (!projection) return
     Taro.showActionSheet({
       itemList: ['编辑作品', '追加到其他群', '撤销在本群投影', '删除作品'],
+      fail: () => undefined,
       success: async (res) => {
         if (res.tapIndex === 0) {
           Taro.navigateTo({ url: `/pages/publish/index?workId=${projection.work.id}` })
@@ -161,7 +170,7 @@ export default function WorkDetail() {
           const spaces = (await getMySpaces()).data
           const candidates = spaces.filter((s: Space) => s.id !== projection.spaceId)
           if (!candidates.length) return Taro.showToast({ title: '没有可追加的群', icon: 'none' })
-          const pick = await Taro.showActionSheet({ itemList: candidates.map((s) => s.name) })
+          const pick = await Taro.showActionSheet({ itemList: candidates.map((s) => s.name), fail: () => undefined })
           if (pick.tapIndex >= 0) {
             const target = candidates[pick.tapIndex]
             await addProjection(projection.work.id, target.id)
@@ -188,7 +197,9 @@ export default function WorkDetail() {
 
   const mediaUrls = projection?.work.mediaUrls || []
   const rawMedia = projection?.work.type === 'audio_video' ? mediaUrls[0] : undefined
-  const { src: localMedia, loading: mediaLoading, error: mediaError } = useLocalMedia(rawMedia)
+  const [audioNeedsDownload, setAudioNeedsDownload] = useState(false)
+  const audioFallback = () => setAudioNeedsDownload(true)
+  const { src: localMedia, loading: mediaLoading, error: mediaError } = useLocalMedia(rawMedia, !isAudioUrl(rawMedia || '') || audioNeedsDownload)
   const workBody = useMemo(() => {
     const w = projection?.work
     if (!w) return null
@@ -206,7 +217,9 @@ export default function WorkDetail() {
         if (!rawMedia) return <View className='media-box'>未找到媒体文件</View>
         if (mediaLoading) return <View className='media-box'>媒体加载中…</View>
         if (mediaError) return <View className='media-box'>⚠️ {mediaError}</View>
-        return isAudioUrl(rawMedia) ? <AudioPlayer src={localMedia} /> : <Video className='detail-video' src={localMedia} controls />
+        return isAudioUrl(rawMedia)
+          ? <AudioPlayer src={localMedia} onError={audioFallback} />
+          : <Video className='detail-video' src={localMedia} controls />
       case 'tech':
         return <View className='tech-box'>{w.techCode}</View>
       case 'external':
@@ -235,6 +248,12 @@ export default function WorkDetail() {
             </View>
             <Text className='author-name' onClick={() => Taro.navigateTo({ url: `/pages/profile/index?userId=${w.author.id}&spaceId=${spaceId}` })}>{displayName(w.author.nickname)}</Text>
           </View>
+          {workDetail?.projectedSpaces.length ? (
+            <View className='projected-spaces'>
+              <Text className='projected-spaces-label'>已投影至</Text>
+              <Text className='projected-spaces-names'>{workDetail.projectedSpaces.map((space) => space.name).join('、')}</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* 非图片类型的封面展示（图片类型首图已在主体滚动条中） */}
@@ -270,6 +289,28 @@ export default function WorkDetail() {
         <CommentList comments={comments} onReply={onReply} onDelete={onDeleteComment} />
       </ScrollView>
 
+      {commentFullscreen ? (
+        <View className='comment-editor half-screen'>
+          <View className='comment-editor-head'>
+            <Text className='comment-editor-title'>{replyTarget ? replyTarget.label : '发表评论'}</Text>
+            <Text className='comment-editor-close' onClick={() => setCommentFullscreen(false)}>关闭</Text>
+          </View>
+          <Textarea
+            className='comment-textarea'
+            value={input}
+            focus
+            autoHeight={false}
+            maxlength={2000}
+            onInput={(e) => setInput(e.detail.value)}
+            placeholder='说点什么…'
+          />
+          <View className='comment-editor-actions'>
+            {replyTarget ? <Text className='comment-cancel-reply' onClick={() => setReplyTarget(null)}>取消回复</Text> : <View />}
+            <Text className={`comment-send ${input.trim() ? '' : 'disabled'}`} onClick={async () => { await submitComment(); setCommentFullscreen(false) }}>发送</Text>
+          </View>
+        </View>
+      ) : null}
+
       <View className='input-bar'>
         {replyTarget ? (
           <View className='reply-hint'>
@@ -277,15 +318,19 @@ export default function WorkDetail() {
             <Text className='cancel-reply' onClick={() => setReplyTarget(null)}>取消</Text>
           </View>
         ) : null}
-        <Input
-          className='input-field'
-          value={input}
-          onInput={(e) => setInput(e.detail.value)}
-          confirmType='send'
-          onConfirm={submitComment}
-          placeholder='说点什么…'
-        />
-        <Text className={`send-btn ${input.trim() ? '' : 'disabled'}`} onClick={submitComment}>发送</Text>
+        <View className='input-row'>
+          <Input
+            className='input-field'
+            value={input}
+            onClick={() => setCommentFullscreen(true)}
+            onInput={(e) => setInput(e.detail.value)}
+            confirmType='send'
+            onConfirm={submitComment}
+            placeholder='说点什么…'
+          />
+          <Text className='expand-comment' onClick={() => setCommentFullscreen(true)}>展开</Text>
+          <Text className={`send-btn ${input.trim() ? '' : 'disabled'}`} onClick={submitComment}>发送</Text>
+        </View>
       </View>
     </View>
   )

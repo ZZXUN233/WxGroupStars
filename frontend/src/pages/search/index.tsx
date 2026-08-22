@@ -25,7 +25,7 @@ export default function Search() {
 
   const pickSpace = async () => {
     if (!spaces.length) return
-    const res = await Taro.showActionSheet({ itemList: spaces.map((s) => s.name) })
+    const res = await Taro.showActionSheet({ itemList: spaces.map((s) => s.name), fail: () => undefined })
     if (res.tapIndex >= 0) {
       setSpaceId(spaces[res.tapIndex].id)
       setSpaceName(spaces[res.tapIndex].name)

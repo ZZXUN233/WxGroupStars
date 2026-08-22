@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service'
 import { likedProjectionIds } from '../common/likes'
 import { mediaUrlOf, projectionToDto, workToDto } from '../common/mappers'
 import { requireMember } from '../common/membership'
-import type { ProjectionDto, UpsertWorkInput, WorkDto } from '../types/api'
+import type { ProjectionDto, UpsertWorkInput, WorkDetailDto, WorkDto } from '../types/api'
 
 @Injectable()
 export class WorksService {
@@ -18,18 +18,41 @@ export class WorksService {
     return work
   }
 
-  async getDetail(userId: number, workId: number): Promise<WorkDto> {
-    const work = await this.prisma.work.findUnique({ where: { id: workId }, include: { author: true } })
+  async getDetail(userId: number, workId: number): Promise<WorkDetailDto> {
+    const work = await this.prisma.work.findUnique({
+      where: { id: workId },
+      include: {
+        author: true,
+        projections: {
+          where: {
+            isActive: true,
+            space: { isActive: true, members: { some: { userId, isActive: true, status: 'active' } } },
+          },
+          select: { space: { select: { id: true, name: true } } },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    })
     if (!work || !work.isActive) throw new NotFoundException('作品不存在')
     // 草稿仅作者本人可见，对外表现为不存在（ADR-0009 草稿语义）
     if (work.isDraft && Number(work.authorId) !== userId) throw new NotFoundException('作品不存在')
-    return workToDto(work)
+    return { ...workToDto(work), projectedSpaces: work.projections.map(({ space }) => ({ id: Number(space.id), name: space.name })) }
   }
 
   /** 当前用户的草稿列表（最新在前），供「我的草稿」入口 */
   async getMyDrafts(userId: number): Promise<WorkDto[]> {
     const works = await this.prisma.work.findMany({
       where: { authorId: userId, isActive: true, isDraft: true },
+      orderBy: { updatedAt: 'desc' },
+      include: { author: true },
+    })
+    return works.map(workToDto)
+  }
+
+  /** 作者的作品管理列表：包含已发布、未投影作品和草稿，不包含已软删作品 */
+  async getMyWorks(userId: number): Promise<WorkDto[]> {
+    const works = await this.prisma.work.findMany({
+      where: { authorId: userId, isActive: true },
       orderBy: { updatedAt: 'desc' },
       include: { author: true },
     })
@@ -58,7 +81,6 @@ export class WorksService {
     }
 
     const spaceIds = [...new Set(input.spaceIds ?? [])]
-    if (!spaceIds.length) throw new BadRequestException('至少选择一个群空间')
     for (const sid of spaceIds) await requireMember(this.prisma, userId, sid)
 
     const created = await this.prisma.$transaction(async (tx) => {
@@ -110,7 +132,6 @@ export class WorksService {
     // 草稿转发布：校验群并投影（与 publish 同语义，已有投影则复活）
     if (prev.isDraft && input.draft === false) {
       const spaceIds = [...new Set(input.spaceIds ?? [])]
-      if (!spaceIds.length) throw new BadRequestException('至少选择一个群空间')
       for (const sid of spaceIds) await requireMember(this.prisma, userId, sid)
       for (const sid of spaceIds) {
         const existing = await this.prisma.projection.findUnique({

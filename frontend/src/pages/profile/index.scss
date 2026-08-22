@@ -94,6 +94,19 @@
   align-items: center;
   gap: 6px;
   width: 20%;
+  padding: 10px 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  &.on {
+    background: #eef0fd;
+    border-color: #d9dcfb;
+
+    .dist-count,
+    .dist-label {
+      color: #4f46e5;
+    }
+  }
 }
 
 .dist-emoji {

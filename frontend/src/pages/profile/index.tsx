@@ -16,11 +16,13 @@ export default function Profile() {
   const [userId, setUserId] = useState(0)
   const [spaceId, setSpaceId] = useState(0)
   const [trail, setTrail] = useState<StarTrail | null>(null)
+  const [selectedType, setSelectedType] = useState<WorkType | null>(null)
 
   const loadTrail = async (uid: number, sid: number) => {
     if (!uid) return
     const res = await getStarTrail(uid, sid || undefined)
     setTrail(res.data)
+    setSelectedType(null)
     if (res.data.user.id !== user?.id) {
       Taro.setNavigationBarTitle({ title: `${displayName(res.data.user.nickname)} · 星轨` })
     }
@@ -53,6 +55,9 @@ export default function Profile() {
   if (!trail) return <View className='empty'>加载中…</View>
 
   const dist = trail.typeDistribution
+  const visibleWorks = selectedType
+    ? trail.recentWorks.filter((work) => work.type === selectedType)
+    : trail.recentWorks
   return (
     <ScrollView scrollY className='trail'>
       <View className='profile-head'>
@@ -81,7 +86,7 @@ export default function Profile() {
             <Text className='entry-arrow'>›</Text>
           </View>
           <View className='entry' onClick={() => Taro.navigateTo({ url: '/pages/drafts/index' })}>
-            <Text className='entry-label'>📝 我的草稿</Text>
+            <Text className='entry-label'>📝 我的作品</Text>
             <Text className='entry-arrow'>›</Text>
           </View>
         </View>
@@ -90,7 +95,11 @@ export default function Profile() {
       <View className='section-title'>创作类型</View>
       <View className='dist-row card'>
         {TYPES.map((t) => (
-          <View key={t} className='dist-item'>
+          <View
+            key={t}
+            className={`dist-item ${selectedType === t ? 'on' : ''}`}
+            onClick={() => setSelectedType(selectedType === t ? null : t)}
+          >
             <Text className='dist-emoji'>{WORK_TYPE_EMOJI[t]}</Text>
             <Text className='dist-count'>{dist[t] || 0}</Text>
             <Text className='dist-label'>{WORK_TYPE_LABEL[t]}</Text>
@@ -99,9 +108,9 @@ export default function Profile() {
       </View>
 
       <View className='section-title'>近期星光</View>
-      {trail.recentWorks.length
-        ? trail.recentWorks.map((work) => <StarTrailWorkCard key={work.id} work={work} />)
-        : <View className='empty'>还没有作品，快发布第一颗星吧</View>}
+      {visibleWorks.length
+        ? visibleWorks.map((work) => <StarTrailWorkCard key={work.id} work={work} />)
+        : <View className='empty'>{selectedType ? `暂无${WORK_TYPE_LABEL[selectedType]}作品` : '还没有作品，快发布第一颗星吧'}</View>}
     </ScrollView>
   )
 }

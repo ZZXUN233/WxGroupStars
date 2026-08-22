@@ -1,6 +1,6 @@
 import { Text, View } from '@tarojs/components'
-import Taro from '@tarojs/taro'
-import { useEffect, useState } from 'react'
+import Taro, { useDidShow } from '@tarojs/taro'
+import { useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Space } from '../../types'
 import { getFeed, getMySpaces } from '../../api'
@@ -13,15 +13,16 @@ export default function Index() {
 
   const load = async () => {
     setLoading(true)
-    const [sp, fd] = await Promise.all([getMySpaces(), getFeed()])
-    setSpaces(sp.data)
-    setFeed(fd.data.items)
-    setLoading(false)
+    try {
+      const [sp, fd] = await Promise.all([getMySpaces(), getFeed()])
+      setSpaces(sp.data)
+      setFeed(fd.data.items)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => {
-    load()
-  }, [])
+  useDidShow(() => { load() })
 
   const goSpace = (id: number) => Taro.navigateTo({ url: `/pages/space/index?id=${id}` })
   const goCreate = () => Taro.navigateTo({ url: '/pages/create-space/index' })
@@ -51,7 +52,10 @@ export default function Index() {
       </View>
       <View className='btn create-btn' onClick={goCreate}>＋ 创建群空间</View>
 
-      <View className='section-title'>最新星光</View>
+      <View className='section-title'>
+        最新星光
+        <Text className={`title-right refresh-action ${loading ? 'loading' : ''}`} onClick={load}>↻ 刷新</Text>
+      </View>
       {loading ? <View className='empty'>加载中…</View> : (
         feed.length ? feed.map((item) => (
           <WorkCard key={item.projection.id} projection={item.projection} spaceName={item.space.name} />

@@ -79,6 +79,15 @@ export interface WorkDto {
   updatedAt: string
 }
 
+export interface WorkProjectedSpaceDto {
+  id: number
+  name: string
+}
+
+export interface WorkDetailDto extends WorkDto {
+  projectedSpaces: WorkProjectedSpaceDto[]
+}
+
 export interface ProjectionDto {
   id: number
   spaceId: number
@@ -89,6 +98,12 @@ export interface ProjectionDto {
   /** projection.created_at —— 时间轴排序基准（ADR-0002） */
   projectedAt: string
   likedByMe: boolean
+}
+
+export interface StarTrailWorkDto extends WorkDto {
+  /** 星轨进入详情时使用的当前用户可访问投影 */
+  projectionId: number
+  spaceId: number
 }
 
 export interface MemberDto {
@@ -118,7 +133,7 @@ export interface StarTrailDto {
   user: UserDto
   workCount: number
   typeDistribution: Partial<Record<WorkType, number>>
-  recentWorks: WorkDto[]
+  recentWorks: StarTrailWorkDto[]
 }
 
 export interface CreateSpaceInput {
@@ -135,7 +150,7 @@ export interface UpsertWorkInput {
   tags?: string[]
   externalLink?: string | null
   techCode?: string | null
-  /** true=保存草稿（不投影）；false=从草稿发布（需 spaceIds）；undefined=普通发布/编辑 */
+  /** true=保存草稿（不投影）；false=从草稿发布；undefined=普通发布/编辑 */
   draft?: boolean
   spaceIds?: number[]
 }

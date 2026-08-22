@@ -8,7 +8,7 @@ import Taro from '@tarojs/taro'
 import { get, post, put, patch, del, reportClientError, setAuthHandler } from './http'
 import type {
   ApiResult, Comment, CreateCommentInput, CreateSpaceInput, FeedItem, Member,
-  JoinResult, Page, PresignResult, Projection, Session, Space, SpaceAccessInfo, StarTrail, TimelineSlice, UpsertWorkInput, User, Work,
+  JoinResult, Page, PresignResult, Projection, Session, Space, SpaceAccessInfo, StarTrail, TimelineSlice, UpsertWorkInput, User, Work, WorkDetail,
 } from '../types'
 
 function ok<T>(data: T): ApiResult<T> {
@@ -83,6 +83,10 @@ export async function updateProfile(input: { nickname?: string; avatarUrl?: stri
 
 export async function getMySpaces(): Promise<ApiResult<Space[]>> {
   return ok(await get<Space[]>('/spaces/mine'))
+}
+
+export async function getMyWorks(): Promise<ApiResult<Work[]>> {
+  return ok(await get<Work[]>('/works/mine'))
 }
 
 export async function getSpaceDetail(id: number): Promise<ApiResult<Space>> {
@@ -201,8 +205,8 @@ export async function getProjection(id: number): Promise<ApiResult<Projection>> 
   return ok(await get<Projection>(`/projections/${id}`))
 }
 
-export async function getWork(id: number): Promise<ApiResult<Work>> {
-  return ok(await get<Work>(`/works/${id}`))
+export async function getWork(id: number): Promise<ApiResult<WorkDetail>> {
+  return ok(await get<WorkDetail>(`/works/${id}`))
 }
 
 export async function publishWork(input: UpsertWorkInput): Promise<ApiResult<Work>> {

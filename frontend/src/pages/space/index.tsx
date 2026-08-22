@@ -152,6 +152,7 @@ export default function Space() {
     const items = space.myRole === 'owner' ? ['修改群空间名称', '转让管理权', '审核加入申请'] : ['审核加入申请']
     Taro.showActionSheet({
       itemList: items,
+      fail: () => undefined,
       success: async (res) => {
         if (space.myRole === 'owner' && res.tapIndex === 0) {
           const r = await Taro.showModal({ title: '修改名称', editable: true, placeholderText: space.name })
@@ -164,7 +165,7 @@ export default function Space() {
           const owner = members.find((m) => m.role === 'owner')
           const others = members.filter((m) => m.user.id !== owner?.user.id)
           const idx = others.map((m) => displayName(m.user.nickname))
-          const pick = await Taro.showActionSheet({ itemList: idx })
+          const pick = await Taro.showActionSheet({ itemList: idx, fail: () => undefined })
           if (pick.tapIndex >= 0) {
             await transferOwner(space.id, others[pick.tapIndex].id)
             Taro.showToast({ title: '已转让', icon: 'success' })

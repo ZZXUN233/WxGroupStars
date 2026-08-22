@@ -85,6 +85,16 @@ export interface Work {
   updatedAt: string
 }
 
+/** 作品详情中当前用户可见的投影群空间 */
+export interface WorkProjectedSpace {
+  id: number
+  name: string
+}
+
+export interface WorkDetail extends Work {
+  projectedSpaces: WorkProjectedSpace[]
+}
+
 /** 群内投影（Projection，独立持有互动计数） */
 export interface Projection {
   id: number
@@ -96,6 +106,12 @@ export interface Projection {
   /** projection.created_at —— 时间轴排序基准 */
   projectedAt: string
   likedByMe: boolean
+}
+
+/** 星轨作品：作品本体之外保留一个可访问投影作为详情入口 */
+export interface StarTrailWork extends Work {
+  projectionId: number
+  spaceId: number
 }
 
 /** 成员（Member） */
@@ -135,7 +151,7 @@ export interface StarTrail {
   workCount: number
   /** 分类分布：type -> count */
   typeDistribution: Partial<Record<WorkType, number>>
-  recentWorks: Work[]
+  recentWorks: StarTrailWork[]
 }
 
 /** 创建群空间入参 */

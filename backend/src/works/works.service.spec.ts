@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common'
+import { NotFoundException } from '@nestjs/common'
 import { WorksService } from './works.service'
 
 const authorRow = { id: 1n, nickname: 'zzx', avatarUrl: null }
@@ -8,6 +8,7 @@ const makeWork = (over: Record<string, any> = {}) => ({
   tags: null, reviewStatus: 'pass', isActive: true, isDraft: false,
   createdAt: new Date('2026-08-01T00:00:00Z'), updatedAt: new Date('2026-08-01T00:00:00Z'),
   author: authorRow,
+  projections: [],
   ...over,
 })
 
@@ -43,10 +44,18 @@ describe('WorksService（草稿：Work.isDraft，ADR-0009 扩展）', () => {
       expect(dto.isDraft).toBe(true)
     })
 
-    it('draft 缺省且无 spaceIds → BadRequest（发布至少选一个群）', async () => {
+    it('draft 缺省且无 spaceIds → 创建无投影的已发布作品', async () => {
       const prisma = makePrisma()
+      prisma.$transaction.mockImplementation(async (fn: (tx: any) => Promise<any>) => fn(prisma))
+      prisma.work.create.mockResolvedValue(makeWork({ isDraft: false }))
+      prisma.user.findUniqueOrThrow.mockResolvedValue(authorRow)
       const svc = new WorksService(prisma)
-      await expect(svc.publish(1, { title: 'x', type: 'text' })).rejects.toBeInstanceOf(BadRequestException)
+
+      const dto = await svc.publish(1, { title: 'x', type: 'text' })
+
+      expect(prisma.work.create).toHaveBeenCalledWith({ data: expect.not.objectContaining({ isDraft: expect.anything() }) })
+      expect(prisma.projection.create).not.toHaveBeenCalled()
+      expect(dto.isDraft).toBe(false)
     })
   })
 
@@ -85,13 +94,17 @@ describe('WorksService（草稿：Work.isDraft，ADR-0009 扩展）', () => {
       expect(dto.isDraft).toBe(false)
     })
 
-    it('草稿转发布但未选群 → BadRequest，不创建投影', async () => {
+    it('草稿转发布但未选群 → 变为已发布作品，不创建投影', async () => {
       const prisma = makePrisma()
       prisma.work.findUnique.mockResolvedValue(makeWork({ isDraft: true }))
+      prisma.work.update.mockResolvedValue(makeWork({ isDraft: false }))
       const svc = new WorksService(prisma)
 
-      await expect(svc.edit(1, 10, { title: 'x', type: 'text', draft: false })).rejects.toBeInstanceOf(BadRequestException)
+      const dto = await svc.edit(1, 10, { title: 'x', type: 'text', draft: false })
+
+      expect(prisma.work.update).toHaveBeenCalledWith({ where: { id: 10 }, data: expect.objectContaining({ isDraft: false }), include: { author: true } })
       expect(prisma.projection.create).not.toHaveBeenCalled()
+      expect(dto.isDraft).toBe(false)
     })
 
     it('编辑已发布作品 draft 缺省 → 不创建投影', async () => {

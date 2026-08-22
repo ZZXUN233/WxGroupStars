@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { likedProjectionIds } from '../common/likes'
 import { paginate, projectionToDto, userToDto, workToDto } from '../common/mappers'
-import type { FeedItemDto, PageDto, ProjectionDto, StarTrailDto, WorkDto, WorkType } from '../types/api'
+import type { FeedItemDto, PageDto, ProjectionDto, StarTrailDto, StarTrailWorkDto, WorkType } from '../types/api'
 
 @Injectable()
 export class AggregatesService {
@@ -41,7 +41,7 @@ export class AggregatesService {
       .map((m) => Number(m.spaceId))
       .filter((sid) => mySpaceIds.has(sid))
 
-    const works: WorkDto[] = []
+    const works: StarTrailWorkDto[] = []
     // 指定了展示群但与该群无共同关系 → 直接空星轨（ADR-0010 上下文口径）
     const scopedToShared = spaceId ? mySpaceIds.has(spaceId) : true
     if ((sharedSpaceIds.length || spaceId) && scopedToShared) {
@@ -59,7 +59,7 @@ export class AggregatesService {
         const workId = Number(p.work.id)
         if (!seenWorkIds.has(workId)) {
           seenWorkIds.add(workId)
-          works.push(workToDto(p.work))
+          works.push({ ...workToDto(p.work), projectionId: Number(p.id), spaceId: Number(p.spaceId) })
         }
       })
     }

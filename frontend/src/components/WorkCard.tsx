@@ -37,9 +37,11 @@ export default function WorkCard({ projection, spaceName }: Props) {
           <Text className='work-type'>{WORK_TYPE_LABEL[work.type]}</Text>
         </View>
         <View className='work-stats'>
-          <Text>❤️ {projection.likeCount}</Text>
-          <Text>💬 {projection.commentCount}</Text>
-          <Text>🔖 {projection.collectCount}</Text>
+          <View className='work-stat-metrics'>
+            <Text>❤️ {projection.likeCount}</Text>
+            <Text>💬 {projection.commentCount}</Text>
+            <Text>🔖 {projection.collectCount}</Text>
+          </View>
           <Text className='time'>{spaceName ? `${spaceName} · ` : ''}{timeAgo(projection.projectedAt)}</Text>
         </View>
       </View>

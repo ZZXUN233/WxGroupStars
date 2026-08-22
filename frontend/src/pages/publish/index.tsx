@@ -167,9 +167,6 @@ export default function Publish() {
     if (type === 'audio_video' && !mediaFile) return toast('请选择视频或音频文件')
     if (type === 'tech' && !techCode.trim()) return toast('请填写技术内容')
     if (type === 'external' && !externalLink.trim()) return toast('请填写外部链接')
-    // 发布（新建或从草稿转发布）需选群；编辑已发布作品无需再选
-    if (isPublish && (!workId || isDraft) && !selectedSpaces.length) return toast('请选择要发布的群空间')
-
     setSubmitting(true)
     try {
       // 先直传 COS 再提交：mediaKeys/coverKey 落库为 COS object key（ADR-0005）
@@ -337,10 +334,10 @@ export default function Publish() {
         <Input className='field-input' value={tagsInput} onInput={(e) => setTagsInput(e.detail.value)} placeholder='用顿号分隔，如：原创，读书笔记' maxlength={60} />
       </View>
 
-      {/* 群空间：新建发布 / 草稿转发布时选择（编辑已发布作品不改投影群） */}
+      {/* 群空间：可选；不选群时作品本体仍会发布，可从「我的作品」继续管理 */}
       {(isDraft || !workId) ? (
         <View className='field'>
-          <Text className='field-label'>发布到群空间</Text>
+          <Text className='field-label'>发布到群空间（可选）</Text>
           <View className='space-row'>
             {mySpaces.map((s) => (
               <View key={s.id} className={`space-chip ${selectedSpaces.includes(s.id) ? 'on' : ''}`} onClick={() => toggleSpace(s.id)}>

@@ -63,3 +63,23 @@ _Avoid_: 最新动态、推荐流、首页信息流
 **时间轴 (Timeline)**:
 按时间展示群体创作历史的视图，支持今日/本周/本月/年度切片。
 _Avoid_: 动态流、信息流、瀑布
+
+## Current Implementation Status
+
+- 技术栈：Taro 4 + React 微信小程序、NestJS 11、Prisma 6、MySQL。
+- 已实现核心流程：微信登录、群空间创建/加入、成员审核与管理、作品发布/编辑/软删、群内投影、时间轴、群内搜索、点赞、两级评论、星轨和最新星光。
+- 星轨近期作品按作品本体去重；同一作品投影到多个群空间时，个人星轨只展示一次。
+- 个人主页的近期星光使用独立作品卡片展示，不携带群内投影的互动统计。
+- 首页当前在 React 组件首次挂载时加载数据；个人主页仍使用页面显示钩子刷新星轨数据。
+
+## Local Verification
+
+```text
+cd backend && npm test -- --runInBand
+cd backend && npm run test:e2e -- --runInBand
+cd backend && npm run build
+cd frontend && npm run build:weapp
+cd frontend && npm run dev:weapp
+```
+
+开发版小程序产物输出到 `frontend/dist`，可用微信开发者工具导入。后端本地开发使用 `npm run start:dev`，运行前需配置 `backend/.env` 中的 `DATABASE_URL`。

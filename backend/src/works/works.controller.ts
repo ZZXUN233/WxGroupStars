@@ -14,6 +14,11 @@ export class WorksController {
     return this.worksService.getMyDrafts(user.id)
   }
 
+  @Get('mine')
+  getMyWorks(@CurrentUser() user: AuthUser) {
+    return this.worksService.getMyWorks(user.id)
+  }
+
   @Get(':id')
   getDetail(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.worksService.getDetail(user.id, Number(id))
