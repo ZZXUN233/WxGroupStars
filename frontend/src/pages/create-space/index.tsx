@@ -9,6 +9,7 @@ export default function CreateSpace() {
   const [submitting, setSubmitting] = useState(false)
   const [joinMode, setJoinMode] = useState(false)
   const [joinedName, setJoinedName] = useState('')
+  const [joinState, setJoinState] = useState<'active' | 'pending'>('active')
 
   // 群分享卡片打开 → ADR-0008 加入路径（mock：直接成功）
   useLoad(async (params) => {
@@ -16,7 +17,8 @@ export default function CreateSpace() {
     if (targetId) {
       setJoinMode(true)
       const res = await joinSpace(targetId)
-      setJoinedName(res.data.name)
+      setJoinState(res.data.state === 'pending' ? 'pending' : 'active')
+      setJoinedName(res.data.space?.name || '')
     }
   })
 
@@ -38,8 +40,8 @@ export default function CreateSpace() {
       <View className='create-space'>
         <View className='join-card card'>
           <Text className='join-emoji'>🎉</Text>
-          <Text className='join-title'>已加入「{joinedName}」</Text>
-          <Text className='join-sub'>通过群分享卡片加入的群空间已显示在首页</Text>
+          <Text className='join-title'>{joinState === 'pending' ? '申请已提交' : `已加入「${joinedName}」`}</Text>
+          <Text className='join-sub'>{joinState === 'pending' ? '群主审核通过后即可进入该群空间' : '通过群分享卡片加入的群空间已显示在首页'}</Text>
         </View>
       </View>
     )

@@ -1,8 +1,9 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
+import { randomBytes } from 'crypto'
 import { PrismaService } from '../prisma/prisma.service'
 import { likedProjectionIds } from '../common/likes'
 import { inSlice, memberToDto, paginate, projectionToDto, spaceToDto } from '../common/mappers'
-import type { CreateSpaceInput, MemberDto, MemberRole, ProjectionDto, SpaceDto, TimelineSlice } from '../types/api'
+import type { CreateSpaceInput, JoinResultDto, MemberDto, MemberRole, ProjectionDto, SpaceDto, SpaceInviteDto, TimelineSlice } from '../types/api'
 
 @Injectable()
 export class SpacesService {
@@ -14,7 +15,7 @@ export class SpacesService {
     const member = await this.prisma.member.findUnique({
       where: { uk_space_user: { spaceId, userId } },
     })
-    if (!member || !member.isActive) throw new ForbiddenException('你不是该群空间的成员')
+    if (!member || !member.isActive || (member.status && member.status !== 'active')) throw new ForbiddenException('你不是该群空间的成员')
     return member
   }
 
@@ -38,7 +39,7 @@ export class SpacesService {
       include: {
         space: {
           include: {
-            members: { where: { isActive: true } },
+            members: { where: { isActive: true, status: 'active' } },
             projections: { where: { isActive: true }, select: { id: true } },
           },
         },
@@ -58,7 +59,7 @@ export class SpacesService {
     const space = await this.requireActiveSpace(spaceId)
     const me = await this.requireMember(userId, spaceId)
     const [memberCount, workCount] = await Promise.all([
-      this.prisma.member.count({ where: { spaceId, isActive: true } }),
+      this.prisma.member.count({ where: { spaceId, isActive: true, status: 'active' } }),
       this.prisma.projection.count({ where: { spaceId, isActive: true } }),
     ])
     return spaceToDto(space, { myRole: me.role as MemberRole, memberCount, workCount })
@@ -67,11 +68,43 @@ export class SpacesService {
   async getMembers(userId: number, spaceId: number): Promise<MemberDto[]> {
     await this.requireMember(userId, spaceId)
     const members = await this.prisma.member.findMany({
-      where: { spaceId, isActive: true },
+      where: { spaceId, isActive: true, status: 'active' },
       include: { user: true },
       orderBy: { joinedAt: 'asc' },
     })
     return members.map(memberToDto)
+  }
+
+  async getPendingMembers(userId: number, spaceId: number): Promise<MemberDto[]> {
+    const manager = await this.requireMember(userId, spaceId)
+    if (manager.role !== 'owner' && manager.role !== 'admin') throw new ForbiddenException('仅群主或管理员可审核申请')
+    const members = await this.prisma.member.findMany({
+      where: { spaceId, status: 'pending', isActive: true },
+      include: { user: true },
+      orderBy: { joinedAt: 'asc' },
+    })
+    return members.map(memberToDto)
+  }
+
+  private async requireManager(userId: number, spaceId: number) {
+    const manager = await this.requireMember(userId, spaceId)
+    if (manager.role !== 'owner' && manager.role !== 'admin') throw new ForbiddenException('仅群主或管理员可审核申请')
+    return manager
+  }
+
+  async reviewMember(userId: number, spaceId: number, memberId: number, approved: boolean): Promise<MemberDto> {
+    await this.requireManager(userId, spaceId)
+    const target = await this.prisma.member.findFirst({
+      where: { id: memberId, spaceId, status: 'pending', isActive: true },
+      include: { user: true },
+    })
+    if (!target) throw new BadRequestException('申请不存在或已处理')
+    const member = await this.prisma.member.update({
+      where: { id: memberId },
+      data: approved ? { status: 'active' } : { status: 'rejected' },
+      include: { user: true },
+    })
+    return memberToDto(member)
   }
 
   /* ---------- 创建 / 治理 ---------- */
@@ -96,7 +129,7 @@ export class SpacesService {
       },
     })
     const [memberCount, workCount] = await Promise.all([
-      this.prisma.member.count({ where: { spaceId, isActive: true } }),
+      this.prisma.member.count({ where: { spaceId, isActive: true, status: 'active' } }),
       this.prisma.projection.count({ where: { spaceId, isActive: true } }),
     ])
     return spaceToDto(space, { myRole: 'owner', memberCount, workCount })
@@ -107,7 +140,7 @@ export class SpacesService {
     const target = await this.prisma.member.findUnique({
       where: { uk_space_user: { spaceId, userId: memberId } },
     })
-    if (!target || !target.isActive) throw new BadRequestException('目标成员不在群内')
+    if (!target || !target.isActive || target.status !== 'active') throw new BadRequestException('目标成员不在群内')
 
     await this.prisma.$transaction([
       this.prisma.member.update({ where: { id: owner.id }, data: { role: 'member' } }),
@@ -120,28 +153,65 @@ export class SpacesService {
   /**
    * 群上下文门禁加入（ADR-0008）：
    * - 空间已绑定 openGid → 需命中才放行；未绑定 → 首次群内打开时绑定。
-   * - MVP 前端尚未解密 shareTicket，openGid 缺省时直接加入（开发/联调降级）。
+   * - 无法验证群上下文时创建 pending 申请，不能绕过封闭空间。
    */
-  async join(userId: number, spaceId: number, openGid?: string | null): Promise<SpaceDto> {
+  async join(userId: number, spaceId: number, openGid?: string | null): Promise<JoinResultDto> {
     const space = await this.requireActiveSpace(spaceId)
-    if (space.openGid && openGid && openGid !== space.openGid) {
-      throw new ForbiddenException('请从该群的分享卡片进入')
-    }
-    if (!space.openGid && openGid) {
+    const verifiedGroup = Boolean(openGid && (!space.openGid || openGid === space.openGid))
+    if (verifiedGroup && !space.openGid) {
       await this.prisma.space.update({ where: { id: spaceId }, data: { openGid } })
     }
 
     const existing = await this.prisma.member.findUnique({
       where: { uk_space_user: { spaceId, userId } },
     })
-    if (existing) {
-      if (!existing.isActive) {
-        await this.prisma.member.update({ where: { id: existing.id }, data: { isActive: true } })
-      }
-    } else {
-      await this.prisma.member.create({ data: { spaceId, userId, role: 'member' } })
+    if (existing?.status === 'active' && existing.isActive) {
+      return { state: 'active', space: await this.getDetail(userId, spaceId) }
     }
-    return this.getDetail(userId, spaceId)
+    if (verifiedGroup) {
+      if (existing) {
+        await this.prisma.member.update({ where: { id: existing.id }, data: { status: 'active', isActive: true } })
+      } else {
+        await this.prisma.member.create({ data: { spaceId, userId, role: 'member', status: 'active' } })
+      }
+      return { state: 'active', space: await this.getDetail(userId, spaceId) }
+    }
+    if (existing?.status !== 'pending' || !existing.isActive) {
+      await (existing
+        ? this.prisma.member.update({ where: { id: existing.id }, data: { status: 'pending', isActive: true } })
+        : this.prisma.member.create({ data: { spaceId, userId, role: 'member', status: 'pending' } }))
+    }
+    return { state: 'pending', space: null }
+  }
+
+  async createInvite(userId: number, spaceId: number): Promise<SpaceInviteDto> {
+    const space = await this.requireActiveSpace(spaceId)
+    await this.requireMember(userId, spaceId)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    const invite = await this.prisma.spaceInvite.create({
+      data: { spaceId, token: randomBytes(24).toString('hex'), expiresAt },
+    })
+    return { token: invite.token, expiresAt: invite.expiresAt.toISOString(), space: { id: Number(space.id), name: space.name } }
+  }
+
+  async acceptInvite(userId: number, token: string): Promise<JoinResultDto> {
+    const invite = await this.prisma.spaceInvite.findUnique({ where: { token }, include: { space: true } })
+    if (!invite || invite.usedAt || invite.expiresAt <= new Date() || !invite.space.isActive) {
+      throw new BadRequestException('邀请链接已失效')
+    }
+    const existing = await this.prisma.member.findUnique({ where: { uk_space_user: { spaceId: invite.spaceId, userId } } })
+    if (existing?.status === 'active' && existing.isActive) {
+      return { state: 'active', space: await this.getDetail(userId, Number(invite.spaceId)) }
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.spaceInvite.update({ where: { id: invite.id }, data: { usedAt: new Date() } })
+      if (existing) {
+        await tx.member.update({ where: { id: existing.id }, data: { status: 'active', isActive: true } })
+      } else {
+        await tx.member.create({ data: { spaceId: invite.spaceId, userId, role: 'member', status: 'active' } })
+      }
+    })
+    return { state: 'active', space: await this.getDetail(userId, Number(invite.spaceId)) }
   }
 
   /* ---------- 时间轴 / 群内搜索 ---------- */

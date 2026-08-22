@@ -3,7 +3,7 @@ import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
 import { useMemo, useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Member, Projection, Space, TimelineSlice } from '../../types'
-import { getSpaceDetail, getSpaceMembers, getSpaceTimeline, transferOwner, updateSpace } from '../../api'
+import { getMemberRequests, getSpaceDetail, getSpaceMembers, getSpaceTimeline, reviewMember, transferOwner, updateSpace } from '../../api'
 import { displayName, initial } from '../../utils/format'
 import './index.scss'
 
@@ -61,7 +61,7 @@ export default function Space() {
     return Array.from(map.entries())
   }, [timeline])
 
-  const isOwner = space?.myRole === 'owner'
+  const canManage = space?.myRole === 'owner' || space?.myRole === 'admin'
   const goMember = (m: Member) => Taro.navigateTo({ url: `/pages/profile/index?userId=${m.user.id}&spaceId=${spaceId}` })
   const goPublish = () => Taro.navigateTo({ url: `/pages/publish/index?spaceId=${spaceId}` })
   const goSearch = () => Taro.navigateTo({ url: `/pages/search/index?spaceId=${spaceId}` })
@@ -69,22 +69,24 @@ export default function Space() {
   // 群空间分享卡片：群友在群内打开 → 门禁自动加入（ADR-0008）
   useShareAppMessage(() => ({
     title: space ? `${space.name} · 群星闪耀` : '群星闪耀',
-    path: `/pages/space/index?id=${spaceId}`
+    path: `/pages/space/index?spaceId=${spaceId}`,
+    withShareTicket: true,
   }))
 
   const onManage = () => {
     if (!space) return
+    const items = space.myRole === 'owner' ? ['修改群空间名称', '转让管理权', '审核加入申请'] : ['审核加入申请']
     Taro.showActionSheet({
-      itemList: ['修改群空间名称', '转让管理权'],
+      itemList: items,
       success: async (res) => {
-        if (res.tapIndex === 0) {
+        if (space.myRole === 'owner' && res.tapIndex === 0) {
           const r = await Taro.showModal({ title: '修改名称', editable: true, placeholderText: space.name })
           if (r.confirm && r.content) {
             const updated = await updateSpace(space.id, { name: r.content })
             setSpace(updated.data)
             Taro.setNavigationBarTitle({ title: r.content })
           }
-        } else if (res.tapIndex === 1) {
+        } else if (space.myRole === 'owner' && res.tapIndex === 1) {
           const owner = members.find((m) => m.role === 'owner')
           const others = members.filter((m) => m.user.id !== owner?.user.id)
           const idx = others.map((m) => displayName(m.user.nickname))
@@ -94,6 +96,18 @@ export default function Space() {
             Taro.showToast({ title: '已转让', icon: 'success' })
             load(space.id, slice)
           }
+        } else {
+          const requests = await getMemberRequests(space.id)
+          if (!requests.data.length) {
+            Taro.showToast({ title: '暂无待审核申请', icon: 'none' })
+            return
+          }
+          const request = requests.data[0]
+          const name = displayName(request.user.nickname)
+          const result = await Taro.showModal({ title: '加入申请', content: `${name} 申请加入该群空间，是否通过？`, confirmText: '通过', cancelText: '拒绝' })
+          await reviewMember(space.id, request.id, result.confirm)
+          Taro.showToast({ title: result.confirm ? '已通过' : '已拒绝', icon: 'success' })
+          load(space.id, slice)
         }
       }
     })
@@ -109,7 +123,7 @@ export default function Space() {
               <Text className='space-title'>{space.name}</Text>
               <Text className='search-btn' onClick={goSearch}>🔍</Text>
               <Button className='share-btn' openType='share'>分享</Button>
-              {isOwner ? <Text className='manage-btn' onClick={onManage}>管理</Text> : null}
+              {canManage ? <Text className='manage-btn' onClick={onManage}>管理</Text> : null}
             </View>
             <View className='space-stats'>
               <Text>{space.workCount} 作品</Text>
@@ -137,7 +151,10 @@ export default function Space() {
 
       <View className='fab' onClick={goPublish}>＋</View>
 
-      <View className='section-title'>群成员</View>
+      <View className='section-title member-section-title'>
+        <Text>群成员</Text>
+        {space && <Text className='invite-member-btn' onClick={() => Taro.navigateTo({ url: `/pages/space-invite/index?spaceId=${space.id}` })}>＋</Text>}
+      </View>
       <View className='member-list card'>
         {members.map((m) => (
           <View key={m.id} className='member-item' onClick={() => goMember(m)}>

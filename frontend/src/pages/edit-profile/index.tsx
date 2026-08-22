@@ -62,7 +62,8 @@ export default function EditProfile() {
       Taro.showToast({ title: '已保存', icon: 'success' })
       setTimeout(() => Taro.navigateBack(), 500)
     } catch (err) {
-      Taro.showToast({ title: (err as Error)?.message || '保存失败，请重试', icon: 'none' })
+      const message = err instanceof Error ? err.message : typeof err === 'string' ? err : '保存失败，请重试'
+      Taro.showToast({ title: message.slice(0, 32), icon: 'none' })
     } finally {
       setSaving(false)
     }

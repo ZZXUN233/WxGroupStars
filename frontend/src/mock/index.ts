@@ -98,7 +98,7 @@ export async function createSpace(input: CreateSpaceInput): Promise<ApiResult<Sp
     memberCount: 1, workCount: 0, myRole: 'owner', createdAt: new Date().toISOString()
   }
   SPACES.push(space)
-  const member = { id: MEMBERS.length + 1, user: ME, role: 'owner' as const, joinedAt: space.createdAt }
+  const member = { id: MEMBERS.length + 1, user: ME, role: 'owner' as const, status: 'active' as const, joinedAt: space.createdAt }
   MEMBERS.push(member)
   SPACE_MEMBERS[space.id] = [member.id]
   return ok(space)
@@ -126,16 +126,16 @@ export async function transferOwner(spaceId: number, memberId: number): Promise<
 }
 
 /** 群上下文门禁加入（ADR-0008）：mock 直接成功 */
-export async function joinSpace(spaceId: number): Promise<ApiResult<Space>> {
+export async function joinSpace(spaceId: number): Promise<ApiResult<{ state: 'active'; space: Space }>> {
   await delay()
   const s = spaceById(spaceId)
   if (!membersOf(spaceId).some((m) => m.user.id === ME.id)) {
-    const member = { id: MEMBERS.length + 1, user: ME, role: 'member' as const, joinedAt: new Date().toISOString() }
+    const member = { id: MEMBERS.length + 1, user: ME, role: 'member' as const, status: 'active' as const, joinedAt: new Date().toISOString() }
     MEMBERS.push(member)
     SPACE_MEMBERS[spaceId] = [...(SPACE_MEMBERS[spaceId] || []), member.id]
     s.memberCount += 1
   }
-  return ok(s)
+  return ok({ state: 'active', space: s })
 }
 
 /* ---------------- 时间轴 / 信息流 ---------------- */

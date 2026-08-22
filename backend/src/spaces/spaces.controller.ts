@@ -38,9 +38,34 @@ export class SpacesController {
     return this.spacesService.join(user.id, Number(id), dto.openGid ?? null)
   }
 
+  @Post(':id/invites')
+  createInvite(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.spacesService.createInvite(user.id, Number(id))
+  }
+
+  @Post('invites/:token/accept')
+  acceptInvite(@CurrentUser() user: AuthUser, @Param('token') token: string) {
+    return this.spacesService.acceptInvite(user.id, token)
+  }
+
   @Get(':id/members')
   getMembers(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.spacesService.getMembers(user.id, Number(id))
+  }
+
+  @Get(':id/member-requests')
+  getPendingMembers(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.spacesService.getPendingMembers(user.id, Number(id))
+  }
+
+  @Post(':id/member-requests/:memberId/approve')
+  approveMember(@CurrentUser() user: AuthUser, @Param('id') id: string, @Param('memberId') memberId: string) {
+    return this.spacesService.reviewMember(user.id, Number(id), Number(memberId), true)
+  }
+
+  @Post(':id/member-requests/:memberId/reject')
+  rejectMember(@CurrentUser() user: AuthUser, @Param('id') id: string, @Param('memberId') memberId: string) {
+    return this.spacesService.reviewMember(user.id, Number(id), Number(memberId), false)
   }
 
   @Get(':id/timeline')

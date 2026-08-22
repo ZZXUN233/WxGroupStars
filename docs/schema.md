@@ -4,7 +4,7 @@
 所有 id 用 BIGINT UNSIGNED 自增。时间用 DATETIME(3)。
 
 ## 表清单
-`user` / `user_identity` / `space` / `member` / `work` / `projection` /
+`user` / `user_identity` / `space` / `member` / `space_invite` / `work` / `projection` /
 `comment` / `like` / `collect`
 
 ---
@@ -65,12 +65,29 @@ CREATE TABLE `member` (
   `user_id`     BIGINT UNSIGNED NOT NULL,
   `role`        VARCHAR(16) NOT NULL DEFAULT 'member'
                               COMMENT 'member / admin / owner',
+  `status`      VARCHAR(16) NOT NULL DEFAULT 'active'
+                              COMMENT 'active / pending / rejected',
   `joined_at`   DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `is_active`   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '软删除（退出群）',
   UNIQUE KEY `uk_space_user` (`space_id`,`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 > 加入方式：群内打开分享卡片（shareTicket→openGId 命中该空间）自动加入；创建者即 owner。
+
+### 5. space_invite 临时成员邀请
+由现有 active 成员生成，链接有效 24 小时且只能使用一次。接受邀请后直接成为 active member。
+```sql
+CREATE TABLE `space_invite` (
+  `id`          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `space_id`    BIGINT UNSIGNED NOT NULL,
+  `token`       VARCHAR(64) NOT NULL,
+  `expires_at`  DATETIME(3) NOT NULL,
+  `used_at`     DATETIME(3) DEFAULT NULL,
+  `created_at`  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  UNIQUE KEY `uk_token` (`token`),
+  KEY `idx_space_expires` (`space_id`,`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
 
 ### 5. work 作品本体（跨群唯一）
 对应 PRD 7.3、ADR-0009（可编辑/软删）、ADR 单表+类型枚举。不含互动计数（属于投影）。

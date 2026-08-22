@@ -89,9 +89,25 @@ model Space {
   creator     User         @relation("SpaceCreator", fields: [creatorId], references: [id])
   members     Member[]
   projections Projection[]
+  invites     SpaceInvite[]
 
   @@index([openGid], name: "idx_open_gid")
   @@map("space")
+}
+
+// 群成员邀请链接：短期有效且只能使用一次
+model SpaceInvite {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  spaceId   BigInt   @map("space_id") @db.UnsignedBigInt
+  token     String   @unique @db.VarChar(64)
+  expiresAt DateTime @map("expires_at") @db.DateTime(3)
+  usedAt    DateTime? @map("used_at") @db.DateTime(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  space Space @relation(fields: [spaceId], references: [id])
+
+  @@index([spaceId, expiresAt], name: "idx_space_expires")
+  @@map("space_invite")
 }
 
 // 群成员（ADR-0006 封闭性、ADR-0008 门禁加入、ADR-0018 申请审核）

@@ -8,6 +8,7 @@ export type WorkType = 'text' | 'image' | 'audio_video' | 'tech' | 'external'
 
 /** 成员角色 */
 export type MemberRole = 'member' | 'admin' | 'owner'
+export type MemberStatus = 'active' | 'pending' | 'rejected'
 
 /** 时间轴切片（日历口径，ADR-0002） */
 export type TimelineSlice = 'today' | 'week' | 'month' | 'year'
@@ -93,7 +94,13 @@ export interface Member {
   id: number
   user: User
   role: MemberRole
+  status: MemberStatus
   joinedAt: string
+}
+
+export interface JoinResult {
+  state: 'active' | 'pending' | 'rejected'
+  space: Space | null
 }
 
 /** 评论（两级结构：评论 + 一级回复，ADR-0007） */

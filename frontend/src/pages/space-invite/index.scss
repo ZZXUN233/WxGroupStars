@@ -1,0 +1,36 @@
+.invite-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 120px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f7f8fc;
+}
+
+.invite-title {
+  font-size: 40px;
+  font-weight: 800;
+  color: #25283a;
+}
+
+.invite-sub,
+.invite-note {
+  margin-top: 20px;
+  font-size: 26px;
+  line-height: 1.6;
+  text-align: center;
+  color: #737b91;
+}
+
+.share-invite-btn,
+.invite-page Button {
+  margin-top: 56px;
+  color: #fff;
+  background: #4f46e5;
+  border-radius: 12px;
+}
+
+.invite-page Button::after {
+  border: none;
+}

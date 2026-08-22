@@ -8,7 +8,7 @@ import Taro from '@tarojs/taro'
 import { get, post, put, patch, del, setAuthHandler } from './http'
 import type {
   ApiResult, Comment, CreateCommentInput, CreateSpaceInput, FeedItem, Member,
-  Page, PresignResult, Projection, Session, Space, StarTrail, TimelineSlice, UpsertWorkInput, User, Work,
+  JoinResult, Page, PresignResult, Projection, Session, Space, StarTrail, TimelineSlice, UpsertWorkInput, User, Work,
 } from '../types'
 
 function ok<T>(data: T): ApiResult<T> {
@@ -93,6 +93,23 @@ export async function getSpaceMembers(id: number): Promise<ApiResult<Member[]>> 
   return ok(await get<Member[]>(`/spaces/${id}/members`))
 }
 
+export async function getMemberRequests(id: number): Promise<ApiResult<Member[]>> {
+  return ok(await get<Member[]>(`/spaces/${id}/member-requests`))
+}
+
+export async function reviewMember(id: number, memberId: number, approved: boolean): Promise<ApiResult<Member>> {
+  const action = approved ? 'approve' : 'reject'
+  return ok(await post<Member>(`/spaces/${id}/member-requests/${memberId}/${action}`, {}))
+}
+
+export async function createSpaceInvite(id: number): Promise<ApiResult<{ token: string; expiresAt: string; space: Pick<Space, 'id' | 'name'> }>> {
+  return ok(await post(`/spaces/${id}/invites`, {}))
+}
+
+export async function acceptSpaceInvite(token: string): Promise<ApiResult<JoinResult>> {
+  return ok(await post<JoinResult>(`/spaces/invites/${token}/accept`, {}))
+}
+
 export async function createSpace(input: CreateSpaceInput): Promise<ApiResult<Space>> {
   return ok(await post<Space>('/spaces', input))
 }
@@ -105,8 +122,8 @@ export async function transferOwner(spaceId: number, memberId: number): Promise<
   return ok(await post<Space>(`/spaces/${spaceId}/transfer-owner`, { memberId }))
 }
 
-export async function joinSpace(spaceId: number, openGid?: string): Promise<ApiResult<Space>> {
-  return ok(await post<Space>(`/spaces/${spaceId}/join`, openGid ? { openGid } : {}))
+export async function joinSpace(spaceId: number, openGid?: string): Promise<ApiResult<JoinResult>> {
+  return ok(await post<JoinResult>(`/spaces/${spaceId}/join`, openGid ? { openGid } : {}))
 }
 
 export async function getSpaceTimeline(spaceId: number, slice: TimelineSlice, page = 1): Promise<ApiResult<Page<Projection>>> {

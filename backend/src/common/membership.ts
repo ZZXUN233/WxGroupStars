@@ -10,7 +10,7 @@ export async function requireMember(prisma: PrismaClient, userId: number, spaceI
   const member = await prisma.member.findUnique({
     where: { uk_space_user: { spaceId, userId } },
   })
-  if (!member || !member.isActive || member.status !== 'active') throw new ForbiddenException('你不是该群空间的成员')
+  if (!member || !member.isActive || (member.status && member.status !== 'active')) throw new ForbiddenException('你不是该群空间的成员')
   return member
 }
 

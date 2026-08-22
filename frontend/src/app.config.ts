@@ -3,6 +3,7 @@ export default defineAppConfig({
     'pages/index/index',
     'pages/profile/index',
     'pages/space/index',
+    'pages/space-invite/index',
     'pages/work-detail/index',
     'pages/publish/index',
     'pages/search/index',

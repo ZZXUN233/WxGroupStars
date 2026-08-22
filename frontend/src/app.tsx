@@ -26,7 +26,7 @@ function App({ children }: PropsWithChildren<any>) {
     Taro.onAppShow(async (options: AppShowOptions) => {
       const { shareTicket, query } = options
       if (!shareTicket) return
-      const spaceId = Number(query?.spaceId || 0)
+      const spaceId = Number(query?.spaceId || query?.id || 0)
       if (!spaceId) return
       // 同一 ticket 只处理一次，避免热启动重复加入/跳转
       if (shareTicket === handledTicket.current) return
@@ -41,7 +41,12 @@ function App({ children }: PropsWithChildren<any>) {
         } catch {
           // dev/工具环境拿不到真实 getShareInfo → 不带 openGid 走后端 MVP 降级（直接加入）
         }
-        await joinSpace(spaceId, openGid)
+        const joinResult = await joinSpace(spaceId, openGid)
+        if (joinResult.data.state === 'pending') {
+          Taro.showModal({ title: '申请已提交', content: '群主审核通过后即可进入群空间。', showCancel: false })
+          Taro.reLaunch({ url: '/pages/index/index' })
+          return
+        }
 
         const projectionId = Number(query?.projectionId || 0)
         const target = projectionId

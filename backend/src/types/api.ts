@@ -43,6 +43,12 @@ export interface JoinResultDto {
   space: SpaceDto | null
 }
 
+export interface SpaceInviteDto {
+  token: string
+  expiresAt: string
+  space: Pick<SpaceDto, 'id' | 'name'>
+}
+
 export interface SpaceDto {
   id: number
   name: string
