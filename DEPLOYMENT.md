@@ -38,6 +38,8 @@ nginx -t && nginx -s reload
 ## 常用命令
 
 ```bash
+./deploy_update.sh              # WSL Docker 构建并推送 latest 镜像
+./deploy_update.sh v1.0.0       # 构建并推送指定版本
 ./deploy.sh frontend-h5
 ./deploy.sh frontend-weapp
 ./deploy.sh build
