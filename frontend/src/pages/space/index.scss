@@ -2,6 +2,94 @@
   padding: 8px 24px 40px;
 }
 
+.access-page {
+  min-height: 100vh;
+  background: #f7f8fd;
+}
+
+.access-card {
+  margin-top: 96px;
+  padding: 32px 28px;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 16px;
+}
+
+.access-space-head {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.access-space-title, .access-state, .owner-label, .owner-name {
+  display: block;
+}
+
+.access-space-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: #1a2233;
+}
+
+.access-state {
+  margin-top: 10px;
+  font-size: 24px;
+  color: #8b94a9;
+}
+
+.access-divider {
+  height: 1px;
+  margin: 32px 0 24px;
+  background: #eef0f5;
+}
+
+.owner-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.owner-info {
+  flex: 1;
+}
+
+.owner-label {
+  font-size: 20px;
+  color: #8b94a9;
+}
+
+.owner-name {
+  margin-top: 4px;
+  font-size: 28px;
+  color: #1a2233;
+  font-weight: 600;
+}
+
+.owner-info-icon {
+  width: 36px;
+  height: 36px;
+  color: #4f46e5;
+  border: 1px solid #d9dcfb;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 24px;
+  line-height: 34px;
+  font-weight: 700;
+}
+
+.apply-btn {
+  margin-top: 32px;
+  padding: 22px;
+  color: #fff;
+  background: #4f46e5;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 600;
+
+  &.disabled { opacity: .55; }
+}
+
 .space-head {
   display: flex;
   align-items: center;

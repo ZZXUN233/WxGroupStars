@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Markdown from '../../components/Markdown'
 import type { Space, UpsertWorkInput, WorkType } from '../../types'
 import { COS_BASE_URL, editWork, getMySpaces, getPresign, getWork, publishWork, uploadToCos } from '../../api'
+import { reportClientError } from '../../api/http'
 import { WORK_TYPE_EMOJI, WORK_TYPE_LABEL } from '../../utils/workType'
 import './index.scss'
 
@@ -31,6 +32,9 @@ export default function Publish() {
   const [type, setType] = useState<WorkType>('text')
   const [textContent, setTextContent] = useState('')
   const [preview, setPreview] = useState(false) // 说明区 编辑/预览 切换
+  const [editorFullscreen, setEditorFullscreen] = useState(false)
+  const [editorFocus, setEditorFocus] = useState(false)
+  const [editorSelection, setEditorSelection] = useState({ start: 0, end: 0 })
   const [images, setImages] = useState<string[]>([])
   const [mediaFile, setMediaFile] = useState('')
   const [mediaKind, setMediaKind] = useState<'video' | 'audio'>('video')
@@ -129,6 +133,31 @@ export default function Publish() {
 
   const toast = (title: string) => Taro.showToast({ title, icon: 'none' })
 
+  const rememberEditorSelection = (cursor: number) => {
+    setEditorSelection({ start: cursor, end: cursor })
+  }
+
+  const insertMarkdown = (prefix: string, suffix = '', placeholder = '内容') => {
+    const start = Math.min(editorSelection.start, textContent.length)
+    const end = Math.min(Math.max(editorSelection.end, start), textContent.length)
+    const selected = textContent.slice(start, end)
+    const inner = selected || placeholder
+    const inserted = `${prefix}${inner}${suffix}`
+    setTextContent(textContent.slice(0, start) + inserted + textContent.slice(end))
+    const cursor = selected ? start + inserted.length : start + prefix.length + inner.length
+    setEditorSelection({ start: cursor, end: cursor })
+    setEditorFocus(true)
+  }
+
+  const insertLinePrefix = (prefix: string) => {
+    const start = Math.min(editorSelection.start, textContent.length)
+    const lineStart = textContent.lastIndexOf('\n', Math.max(0, start - 1)) + 1
+    setTextContent(textContent.slice(0, lineStart) + prefix + textContent.slice(lineStart))
+    const cursor = start + prefix.length
+    setEditorSelection({ start: cursor, end: cursor })
+    setEditorFocus(true)
+  }
+
   /** isPublish=true 发布；false 保存草稿（新建或编辑草稿均可用） */
   const submit = async (isPublish: boolean) => {
     if (submitting) return
@@ -175,6 +204,7 @@ export default function Publish() {
       Taro.showToast({ title: isPublish ? '已发布' : '已保存草稿', icon: 'success' })
       setTimeout(() => Taro.navigateBack(), 600)
     } catch (err) {
+      reportClientError('save', err, { workId, type, isPublish })
       toast((err as Error)?.message || (isPublish ? '发布失败，请重试' : '保存失败，请重试'))
     } finally {
       setSubmitting(false)
@@ -270,7 +300,34 @@ export default function Publish() {
             ? <View className='preview-box'><Markdown content={textContent} /></View>
             : <View className='preview-empty'>还没有内容，切回「编辑」写点什么</View>
         ) : (
-          <Textarea className='field-textarea' value={textContent} onInput={(e) => setTextContent(e.detail.value)} placeholder={type === 'text' ? '写点什么，支持 Markdown…' : '记录介绍、心得…支持 Markdown'} autoHeight maxlength={20000} />
+          <View className={`editor-shell ${editorFullscreen ? 'fullscreen' : ''}`}>
+            <View className='editor-toolbar'>
+              <Text className='editor-tool' onClick={() => insertMarkdown('**', '**', '加粗')}>B</Text>
+              <Text className='editor-tool italic' onClick={() => insertMarkdown('*', '*', '斜体')}>I</Text>
+              <Text className='editor-tool code-tool' onClick={() => insertMarkdown('`', '`', '代码')}>`</Text>
+              <Text className='editor-tool' onClick={() => insertLinePrefix('## ')}>H2</Text>
+              <Text className='editor-tool' onClick={() => insertLinePrefix('- ')}>列表</Text>
+              <Text className='editor-tool' onClick={() => insertLinePrefix('> ')}>引用</Text>
+              <Text className='editor-tool' onClick={() => insertMarkdown('[', '](https://)', '链接')}>链接</Text>
+              <Text className='editor-tool' onClick={() => insertMarkdown('\n', '', '')}>换行</Text>
+              <Text className='editor-expand' onClick={() => setEditorFullscreen(!editorFullscreen)}>{editorFullscreen ? '退出全屏' : '放大编辑'}</Text>
+            </View>
+            <Textarea
+              className='field-textarea editor-textarea'
+              value={textContent}
+              cursor={editorSelection.start}
+              focus={editorFocus}
+              onFocus={() => setEditorFocus(true)}
+              onBlur={() => setEditorFocus(false)}
+              onInput={(e) => {
+                setTextContent(e.detail.value)
+                rememberEditorSelection(e.detail.cursor)
+              }}
+              placeholder={type === 'text' ? '写点什么，支持 Markdown…' : '记录介绍、心得…支持 Markdown'}
+              autoHeight={!editorFullscreen}
+              maxlength={20000}
+            />
+          </View>
         )}
         <Text className='field-hint'>{MD_HINT}</Text>
       </View>

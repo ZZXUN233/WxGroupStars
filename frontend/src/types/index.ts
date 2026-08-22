@@ -57,6 +57,14 @@ export interface Space {
   createdAt: string
 }
 
+export type SpaceAccessState = 'active' | 'pending' | 'rejected' | 'none'
+
+export interface SpaceAccessInfo {
+  space: Pick<Space, 'id' | 'name' | 'coverUrl' | 'creatorId' | 'createdAt'>
+  owner: User
+  state: SpaceAccessState
+}
+
 /** 作品本体（Work，跨群一致） */
 export interface Work {
   id: number

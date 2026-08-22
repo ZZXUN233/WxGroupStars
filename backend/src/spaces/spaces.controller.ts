@@ -18,6 +18,11 @@ export class SpacesController {
     return this.spacesService.create(user.id, dto)
   }
 
+  @Get(':id/access')
+  getAccessInfo(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.spacesService.getAccessInfo(user.id, Number(id))
+  }
+
   @Get(':id')
   getDetail(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.spacesService.getDetail(user.id, Number(id))

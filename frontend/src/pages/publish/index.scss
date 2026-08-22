@@ -45,6 +45,73 @@
   }
 }
 
+.editor-shell {
+  position: relative;
+
+  &.fullscreen {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 24px;
+    background: #f7f8fd;
+
+    .editor-textarea {
+      height: calc(100vh - 112px);
+      min-height: 0;
+    }
+  }
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  background: #f4f5fa;
+  border: 1px solid #e7e9f2;
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  white-space: nowrap;
+}
+
+.editor-tool, .editor-expand {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  color: #566075;
+  background: #fff;
+  border: 1px solid #e7e9f2;
+  border-radius: 8px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.editor-tool {
+  font-weight: 700;
+}
+
+.editor-tool.italic {
+  font-style: italic;
+}
+
+.editor-tool.code-tool {
+  font-family: monospace;
+}
+
+.editor-expand {
+  margin-left: auto;
+  color: #4f46e5;
+  border-color: #d9dcfb;
+}
+
+.editor-textarea {
+  border-radius: 0 0 14px 14px;
+}
+
 .field-hint {
   display: block;
   font-size: 22px;

@@ -27,26 +27,64 @@ export function setAuthHandler(fn: () => Promise<void>): void {
   ensureAuth = fn
 }
 
+export type ClientErrorStage = 'request' | 'upload' | 'save' | 'login' | 'render' | 'unknown'
+
+let reportingClientError = false
+
+/** 统一上报前端错误；上报失败静默处理，避免错误上报形成递归。 */
+export function reportClientError(
+  stage: ClientErrorStage,
+  error: unknown,
+  context: Record<string, unknown> = {},
+): void {
+  if (reportingClientError) return
+  reportingClientError = true
+  const message = error instanceof Error ? error.message : String(error)
+  const stack = error instanceof Error ? error.stack : undefined
+  const page = (() => {
+    try {
+      return Taro.getCurrentPages?.().slice(-1)[0]?.route
+    } catch {
+      return undefined
+    }
+  })()
+  Taro.request({
+    url: `${BASE_URL}/diagnostics/client-error`,
+    method: 'POST',
+    data: { stage, message, stack, page, context },
+    header: (() => {
+      const token = Taro.getStorageSync('gs_token') || ''
+      return token ? { Authorization: `Bearer ${token}` } : undefined
+    })(),
+    timeout: 5000,
+  }).catch(() => undefined).finally(() => { reportingClientError = false })
+}
+
 export async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
-  // 登录接口自身不触发登录（避免死循环）；其余接口（含 /auth/me 等鉴权接口）无 token 时先登录
-  if (ensureAuth && !url.startsWith('/auth/login')) {
-    await ensureAuth()
+  try {
+    // 登录接口自身不触发登录（避免死循环）；其余接口（含 /auth/me 等鉴权接口）无 token 时先登录
+    if (ensureAuth && !url.startsWith('/auth/login')) {
+      await ensureAuth()
+    }
+    const token = Taro.getStorageSync('gs_token') || ''
+    const res = await Taro.request<ApiResult<T>>({
+      url: `${BASE_URL}${url}`,
+      method: options.method || 'GET',
+      data: options.data as any,
+      header: token ? { Authorization: `Bearer ${token}` } : undefined
+    })
+    if (res.statusCode >= 200 && res.statusCode < 300 && res.data.code === 0) {
+      return res.data.data
+    }
+    if (res.statusCode === 401) {
+      Taro.removeStorageSync('gs_token')
+      Taro.navigateTo({ url: '/pages/index/index' })
+    }
+    throw new Error(res.data?.message || `请求失败 (${res.statusCode})`)
+  } catch (error) {
+    reportClientError('request', error, { method: options.method || 'GET', endpoint: url })
+    throw error
   }
-  const token = Taro.getStorageSync('gs_token') || ''
-  const res = await Taro.request<ApiResult<T>>({
-    url: `${BASE_URL}${url}`,
-    method: options.method || 'GET',
-    data: options.data as any,
-    header: token ? { Authorization: `Bearer ${token}` } : undefined
-  })
-  if (res.statusCode >= 200 && res.statusCode < 300 && res.data.code === 0) {
-    return res.data.data
-  }
-  if (res.statusCode === 401) {
-    Taro.removeStorageSync('gs_token')
-    Taro.navigateTo({ url: '/pages/index/index' })
-  }
-  throw new Error(res.data?.message || `请求失败 (${res.statusCode})`)
 }
 
 export const get = <T>(url: string, data?: unknown) => request<T>(url, { method: 'GET', data })

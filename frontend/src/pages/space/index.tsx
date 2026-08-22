@@ -3,8 +3,9 @@ import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
 import { useMemo, useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Member, Projection, Space, TimelineSlice } from '../../types'
-import { getMemberRequests, getSpaceDetail, getSpaceMembers, getSpaceTimeline, reviewMember, transferOwner, updateSpace } from '../../api'
+import { getMemberRequests, getSpaceAccessInfo, getSpaceDetail, getSpaceMembers, getSpaceTimeline, joinSpace, reviewMember, transferOwner, updateSpace } from '../../api'
 import { displayName, initial } from '../../utils/format'
+import type { SpaceAccessInfo } from '../../types'
 import './index.scss'
 
 const SLICES: { key: TimelineSlice; label: string }[] = [
@@ -24,6 +25,8 @@ export default function Space() {
   const [spaceId, setSpaceId] = useState<number>(0)
   const [space, setSpace] = useState<Space | null>(null)
   const [members, setMembers] = useState<Member[]>([])
+  const [accessInfo, setAccessInfo] = useState<SpaceAccessInfo | null>(null)
+  const [applying, setApplying] = useState(false)
   const [slice, setSlice] = useState<TimelineSlice>('month')
   const [timeline, setTimeline] = useState<Projection[]>([])
 
@@ -34,15 +37,43 @@ export default function Space() {
   })
 
   const load = async (id: number, sl = 'month' as TimelineSlice) => {
-    const [sp, mem, tl] = await Promise.all([
-      getSpaceDetail(id),
+    let sp
+    try {
+      sp = await getSpaceDetail(id)
+    } catch {
+      const access = await getSpaceAccessInfo(id)
+      setAccessInfo(access.data)
+      Taro.setNavigationBarTitle({ title: access.data.space.name })
+      return
+    }
+    const [mem, tl] = await Promise.all([
       getSpaceMembers(id),
       getSpaceTimeline(id, sl)
     ])
     setSpace(sp.data)
+    setAccessInfo(null)
     setMembers(mem.data)
     setTimeline(tl.data.items)
     Taro.setNavigationBarTitle({ title: sp.data.name })
+  }
+
+  const applyForAccess = async () => {
+    if (!accessInfo || applying) return
+    setApplying(true)
+    try {
+      const result = await joinSpace(accessInfo.space.id)
+      if (result.data.state === 'active') {
+        await load(accessInfo.space.id)
+        Taro.showToast({ title: '已加入群空间', icon: 'success' })
+      } else {
+        setAccessInfo({ ...accessInfo, state: result.data.state })
+        Taro.showToast({ title: '申请已提交', icon: 'success' })
+      }
+    } catch (error) {
+      Taro.showToast({ title: (error as Error).message || '申请失败，请重试', icon: 'none' })
+    } finally {
+      setApplying(false)
+    }
   }
 
   const switchSlice = (sl: TimelineSlice) => {
@@ -130,6 +161,41 @@ export default function Space() {
         }
       }
     })
+  }
+
+  if (!space && accessInfo) {
+    const stateText = accessInfo.state === 'pending'
+      ? '申请审核中'
+      : accessInfo.state === 'rejected'
+        ? '申请未通过，可再次申请'
+        : '你暂无该群空间权限'
+    return (
+      <View className='space access-page'>
+        <View className='access-card'>
+          <View className='access-space-head'>
+            <View className='space-cover'>{accessInfo.space.coverUrl ? <Image src={accessInfo.space.coverUrl} mode='aspectFill' /> : <Text className='space-emoji'>⭐</Text>}</View>
+            <View>
+              <Text className='access-space-title'>{accessInfo.space.name}</Text>
+              <Text className='access-state'>{stateText}</Text>
+            </View>
+          </View>
+          <View className='access-divider' />
+          <View className='owner-row'>
+            <View className='avatar'>
+              {accessInfo.owner.avatarUrl ? <Image src={accessInfo.owner.avatarUrl} mode='aspectFill' /> : <Text>{initial(accessInfo.owner.nickname)}</Text>}
+            </View>
+            <View className='owner-info'>
+              <Text className='owner-label'>群主</Text>
+              <Text className='owner-name'>{displayName(accessInfo.owner.nickname)}</Text>
+            </View>
+            <Text className='owner-info-icon'>i</Text>
+          </View>
+          {accessInfo.state !== 'pending' ? (
+            <View className={`apply-btn ${applying ? 'disabled' : ''}`} onClick={applyForAccess}>申请加入</View>
+          ) : null}
+        </View>
+      </View>
+    )
   }
 
   return (

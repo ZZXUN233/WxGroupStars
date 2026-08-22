@@ -5,10 +5,10 @@
  * 因此开发环境用持久化 devUid 作为 code，保证登录态跨启动稳定。
  */
 import Taro from '@tarojs/taro'
-import { get, post, put, patch, del, setAuthHandler } from './http'
+import { get, post, put, patch, del, reportClientError, setAuthHandler } from './http'
 import type {
   ApiResult, Comment, CreateCommentInput, CreateSpaceInput, FeedItem, Member,
-  JoinResult, Page, PresignResult, Projection, Session, Space, StarTrail, TimelineSlice, UpsertWorkInput, User, Work,
+  JoinResult, Page, PresignResult, Projection, Session, Space, SpaceAccessInfo, StarTrail, TimelineSlice, UpsertWorkInput, User, Work,
 } from '../types'
 
 function ok<T>(data: T): ApiResult<T> {
@@ -89,6 +89,10 @@ export async function getSpaceDetail(id: number): Promise<ApiResult<Space>> {
   return ok(await get<Space>(`/spaces/${id}`))
 }
 
+export async function getSpaceAccessInfo(id: number): Promise<ApiResult<SpaceAccessInfo>> {
+  return ok(await get<SpaceAccessInfo>(`/spaces/${id}/access`))
+}
+
 export async function getSpaceMembers(id: number): Promise<ApiResult<Member[]>> {
   return ok(await get<Member[]>(`/spaces/${id}/members`))
 }
@@ -153,10 +157,27 @@ export async function getPresign(filename: string): Promise<ApiResult<PresignRes
 
 /** 直传 COS：multipart/form-data POST（COS 成功响应可能是 200、201 或 204） */
 export async function uploadToCos(filePath: string, presign: PresignResult): Promise<void> {
-  const res = await Taro.uploadFile({ url: presign.url, filePath, name: 'file', formData: presign.fields })
-  if (res.statusCode < 200 || res.statusCode >= 300) {
-    const detail = typeof res.data === 'string' && res.data ? `：${res.data.slice(0, 80)}` : ''
-    throw new Error(`头像上传失败（HTTP ${res.statusCode}${detail}）`)
+  try {
+    const res = await Taro.uploadFile({
+      url: presign.url,
+      filePath,
+      name: 'file',
+      formData: presign.fields,
+      timeout: 60000,
+    })
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      const detail = typeof res.data === 'string' && res.data ? `：${res.data.slice(0, 120)}` : ''
+      console.error('[COS upload]', res.statusCode, res.data)
+      throw new Error(`头像上传失败（HTTP ${res.statusCode}${detail}）`)
+    }
+  } catch (err) {
+    console.error('[COS upload exception]', err)
+    reportClientError('upload', err, {
+      statusCode: err && typeof err === 'object' && 'statusCode' in err ? (err as { statusCode?: number }).statusCode : undefined,
+      uploadHost: new URL(presign.url).host,
+    })
+    if (err instanceof Error) throw err
+    throw new Error('头像上传失败，请检查网络和 COS 域名配置')
   }
 }
 

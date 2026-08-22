@@ -12,6 +12,7 @@ import { ProjectionsModule } from './projections/projections.module'
 import { CommentsModule } from './comments/comments.module'
 import { AggregatesModule } from './aggregates/aggregates.module'
 import { UploadsModule } from './uploads/uploads.module'
+import { DiagnosticsModule } from './diagnostics/diagnostics.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UploadsModule } from './uploads/uploads.module'
     CommentsModule,
     AggregatesModule,
     UploadsModule,
+    DiagnosticsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

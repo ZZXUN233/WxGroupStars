@@ -2,8 +2,9 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { randomBytes } from 'crypto'
 import { PrismaService } from '../prisma/prisma.service'
 import { likedProjectionIds } from '../common/likes'
-import { inSlice, memberToDto, paginate, projectionToDto, spaceToDto } from '../common/mappers'
+import { inSlice, memberToDto, paginate, projectionToDto, spaceToDto, userToDto } from '../common/mappers'
 import type { CreateSpaceInput, JoinResultDto, MemberDto, MemberRole, ProjectionDto, SpaceDto, SpaceInviteDto, TimelineSlice } from '../types/api'
+import type { SpaceAccessInfoDto } from './access-info'
 
 @Injectable()
 export class SpacesService {
@@ -69,6 +70,33 @@ export class SpacesService {
       ? await this.prisma.member.count({ where: { spaceId, isActive: true, status: 'pending' } })
       : 0
     return spaceToDto(space, { myRole: me.role as MemberRole, memberCount, workCount, pendingCount })
+  }
+
+  /** 非成员可查看的准入信息；不返回成员、作品或互动数据。 */
+  async getAccessInfo(userId: number, spaceId: number): Promise<SpaceAccessInfoDto> {
+    const space = await this.requireActiveSpace(spaceId)
+    const [owner, membership] = await Promise.all([
+      this.prisma.user.findUniqueOrThrow({ where: { id: space.creatorId } }),
+      this.prisma.member.findUnique({ where: { uk_space_user: { spaceId, userId } } }),
+    ])
+    const state = membership?.isActive && membership.status === 'active'
+      ? 'active'
+      : membership?.isActive && membership.status === 'pending'
+        ? 'pending'
+        : membership?.status === 'rejected'
+          ? 'rejected'
+          : 'none'
+    return {
+      space: {
+        id: Number(space.id),
+        name: space.name,
+        coverUrl: space.coverUrl,
+        creatorId: Number(space.creatorId),
+        createdAt: space.createdAt.toISOString(),
+      },
+      owner: userToDto(owner),
+      state,
+    }
   }
 
   async getMembers(userId: number, spaceId: number): Promise<MemberDto[]> {
