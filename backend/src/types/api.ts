@@ -33,7 +33,15 @@ export interface GroupInfoResult {
 
 export type WorkType = 'text' | 'image' | 'audio_video' | 'tech' | 'external'
 export type MemberRole = 'member' | 'admin' | 'owner'
+/** 成员准入状态（ADR-0018）：active=正式成员、pending=待审核申请、rejected=已被拒 */
+export type MemberStatus = 'active' | 'pending' | 'rejected'
 export type TimelineSlice = 'today' | 'week' | 'month' | 'year'
+
+/** 空间加入结果（ADR-0018 双轨）：active=已加入、pending=已申请待审核、rejected=已被拒 */
+export interface JoinResultDto {
+  state: 'active' | 'pending' | 'rejected'
+  space: SpaceDto | null
+}
 
 export interface SpaceDto {
   id: number
@@ -80,6 +88,7 @@ export interface MemberDto {
   id: number
   user: UserDto
   role: MemberRole
+  status: MemberStatus
   joinedAt: string
 }
 
@@ -135,4 +144,9 @@ export interface PresignResult {
   key: string
   url: string
   fields: Record<string, string>
+}
+
+/** 个人分享生成结果（ADR-0018）：token 拼入分享页路由 /pages/work-share/index?token=… */
+export interface WorkShareResultDto {
+  token: string
 }

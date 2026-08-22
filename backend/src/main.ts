@@ -11,6 +11,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   // 与前端契约 BASE_URL 对齐（https://api.zzxun.cn/group-stars）
   app.setGlobalPrefix('group-stars')
+  app.enableCors({
+    origin: ['https://gs.zzxun.cn'],
+    credentials: true,
+  })
+  app.getHttpAdapter().get('/health', (_request, response) => {
+    response.status(200).send({ status: 'ok' })
+  })
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

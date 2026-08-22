@@ -1,6 +1,6 @@
 import type { Comment, Member, Projection, Space, User, Work } from '@prisma/client'
 import type {
-  CommentDto, MemberDto, MemberRole, ProjectionDto, SpaceDto, TimelineSlice, UserDto, WorkDto, WorkType,
+  CommentDto, MemberDto, MemberRole, MemberStatus, ProjectionDto, SpaceDto, TimelineSlice, UserDto, WorkDto, WorkType,
 } from '../types/api'
 
 /* ---------- 基础映射 ---------- */
@@ -107,6 +107,7 @@ export function memberToDto(m: Member & { user: User }): MemberDto {
     id: Number(m.id),
     user: userToDto(m.user),
     role: m.role as MemberRole,
+    status: m.status as MemberStatus,
     joinedAt: m.joinedAt.toISOString(),
   }
 }
