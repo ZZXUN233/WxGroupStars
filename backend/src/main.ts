@@ -9,8 +9,7 @@ import { AppModule } from './app.module'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
-  // 与前端契约 BASE_URL 对齐（https://api.zzxun.cn/group-stars）
-  app.setGlobalPrefix('group-stars')
+  // API 通过独立域名 gs.zzxun.cn 提供，接口直接使用根路径。
   app.enableCors({
     origin: [
       'https://gs.zzxun.cn',

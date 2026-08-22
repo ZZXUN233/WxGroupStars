@@ -37,7 +37,7 @@ H5 产物位于 `frontend/dist`，脚本会复制到 `/var/www/group-stars`。�
 ./deploy.sh start
 ```
 
-微信小程序构建也会输出到 `frontend/dist`，请用微信开发者工具打开 `frontend` 项目并上传，不要将该目录作为 Nginx 站点。前端生产构建可用 `TARO_APP_BASE_URL=https://api.example.com/group-stars npm run build:h5` 覆盖 API 地址；默认值在 [http.ts](frontend/src/api/http.ts) 中配置。
+微信小程序构建也会输出到 `frontend/dist`，请用微信开发者工具打开 `frontend` 项目并上传。当前小程序 API 地址为 `https://gs.zzxun.cn`，接口直接使用根路径（例如 `/auth/login`）；前端构建可用 `TARO_APP_BASE_URL` 覆盖 API 地址。
 
 ## Nginx
 
@@ -47,7 +47,7 @@ H5 产物位于 `frontend/dist`，脚本会复制到 `/var/www/group-stars`。�
 nginx -t && nginx -s reload
 ```
 
-配置使用 `https://gs.zzxun.cn` 托管 H5，同时供微信小程序访问 `https://gs.zzxun.cn/group-stars`；H5 页面接口使用独立的 `https://api.zzxun.cn/group-stars`。Nginx 中 `gs` 站点的 `/group-stars/` 反代到远程宿主机 `127.0.0.1:3007`，再转发到容器 `3000`。
+当前配置仅部署微信小程序 API：`https://gs.zzxun.cn` 根路径直接反代到远程宿主机 `127.0.0.1:3007`，再转发到容器 `3000`。已移除 `/group-stars` 前缀；H5 入口暂不纳入此配置。
 
 ## 常用命令
 
