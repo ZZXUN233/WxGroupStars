@@ -223,7 +223,18 @@ export default function WorkDetail() {
       case 'tech':
         return <View className='tech-box'>{w.techCode}</View>
       case 'external':
-        return <View className='external-box'>🔗 {w.externalLink}</View>
+        return (
+          <View
+            className='external-box'
+            onClick={() => {
+              if (w.externalLink) {
+                Taro.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(w.externalLink)}` })
+              }
+            }}
+          >
+            🔗 {w.externalLink}
+          </View>
+        )
     }
   }, [projection, localMedia, mediaLoading, mediaError])
 
