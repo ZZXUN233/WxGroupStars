@@ -1,6 +1,6 @@
 import { Text, View } from '@tarojs/components'
-import Taro, { useDidShow } from '@tarojs/taro'
-import { useState } from 'react'
+import Taro from '@tarojs/taro'
+import { useEffect, useState } from 'react'
 import WorkCard from '../../components/WorkCard'
 import type { Space } from '../../types'
 import { getFeed, getMySpaces } from '../../api'
@@ -19,9 +19,9 @@ export default function Index() {
     setLoading(false)
   }
 
-  useDidShow(() => {
+  useEffect(() => {
     load()
-  })
+  }, [])
 
   const goSpace = (id: number) => Taro.navigateTo({ url: `/pages/space/index?id=${id}` })
   const goCreate = () => Taro.navigateTo({ url: '/pages/create-space/index' })

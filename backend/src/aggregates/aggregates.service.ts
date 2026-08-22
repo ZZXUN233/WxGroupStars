@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { likedProjectionIds } from '../common/likes'
-import { paginate, projectionToDto, userToDto } from '../common/mappers'
-import type { FeedItemDto, PageDto, ProjectionDto, StarTrailDto, WorkType } from '../types/api'
+import { paginate, projectionToDto, userToDto, workToDto } from '../common/mappers'
+import type { FeedItemDto, PageDto, ProjectionDto, StarTrailDto, WorkDto, WorkType } from '../types/api'
 
 @Injectable()
 export class AggregatesService {
@@ -41,7 +41,7 @@ export class AggregatesService {
       .map((m) => Number(m.spaceId))
       .filter((sid) => mySpaceIds.has(sid))
 
-    const projections: ProjectionDto[] = []
+    const works: WorkDto[] = []
     // 指定了展示群但与该群无共同关系 → 直接空星轨（ADR-0010 上下文口径）
     const scopedToShared = spaceId ? mySpaceIds.has(spaceId) : true
     if ((sharedSpaceIds.length || spaceId) && scopedToShared) {
@@ -54,21 +54,27 @@ export class AggregatesService {
         include: { work: { include: { author: true } } },
         orderBy: { createdAt: 'desc' },
       })
-      const liked = await likedProjectionIds(this.prisma, rows.map((p) => p.id), userId)
-      rows.forEach((p) => projections.push(projectionToDto(p, liked.has(Number(p.id)))))
+      const seenWorkIds = new Set<number>()
+      rows.forEach((p) => {
+        const workId = Number(p.work.id)
+        if (!seenWorkIds.has(workId)) {
+          seenWorkIds.add(workId)
+          works.push(workToDto(p.work))
+        }
+      })
     }
 
     const dist: StarTrailDto['typeDistribution'] = {}
-    projections.forEach((p) => {
-      const t = p.work.type as WorkType
+    works.forEach((work) => {
+      const t = work.type as WorkType
       dist[t] = (dist[t] || 0) + 1
     })
     const target = await this.prisma.user.findUniqueOrThrow({ where: { id: targetId } })
     return {
       user: userToDto(target),
-      workCount: projections.length,
+      workCount: works.length,
       typeDistribution: dist,
-      recentWorks: projections.slice(0, 10),
+      recentWorks: works.slice(0, 10),
     }
   }
 }

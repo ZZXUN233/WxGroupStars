@@ -135,7 +135,7 @@ export interface StarTrail {
   workCount: number
   /** 分类分布：type -> count */
   typeDistribution: Partial<Record<WorkType, number>>
-  recentWorks: Projection[]
+  recentWorks: Work[]
 }
 
 /** 创建群空间入参 */

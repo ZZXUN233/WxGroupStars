@@ -118,7 +118,7 @@ export interface StarTrailDto {
   user: UserDto
   workCount: number
   typeDistribution: Partial<Record<WorkType, number>>
-  recentWorks: ProjectionDto[]
+  recentWorks: WorkDto[]
 }
 
 export interface CreateSpaceInput {

@@ -1,7 +1,7 @@
 import { Image, ScrollView, Text, View } from '@tarojs/components'
 import Taro, { useDidShow, useLoad } from '@tarojs/taro'
 import { useEffect, useState } from 'react'
-import WorkCard from '../../components/WorkCard'
+import StarTrailWorkCard from '../../components/StarTrailWorkCard'
 import { useApp } from '../../store'
 import type { StarTrail, WorkType } from '../../types'
 import { getStarTrail } from '../../api'
@@ -100,7 +100,7 @@ export default function Profile() {
 
       <View className='section-title'>近期星光</View>
       {trail.recentWorks.length
-        ? trail.recentWorks.map((p) => <WorkCard key={p.id} projection={p} />)
+        ? trail.recentWorks.map((work) => <StarTrailWorkCard key={work.id} work={work} />)
         : <View className='empty'>还没有作品，快发布第一颗星吧</View>}
     </ScrollView>
   )
