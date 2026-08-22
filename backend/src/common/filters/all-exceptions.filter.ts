@@ -14,6 +14,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR
+    const request = ctx.getRequest<Request & { method?: string; originalUrl?: string }>()
+    const method = request.method ?? 'UNKNOWN'
+    const path = request.originalUrl ?? request.url ?? 'UNKNOWN'
 
     let message = '服务器开小差了'
     let state: string | undefined
@@ -23,8 +26,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = Array.isArray(raw) ? raw.join('；') : String(raw)
       // 结构化错误（如 ADR-0018 成员准入状态 pending/rejected/none）透传给前端渲染「无权限页」
       state = typeof body === 'object' && body !== null ? (body as any).state : undefined
+      this.logger.warn(`[${method} ${path}] HTTP ${status}: ${message}`)
     } else {
-      this.logger.error(exception instanceof Error ? exception.stack : exception)
+      const detail = exception instanceof Error ? exception.stack ?? exception.message : String(exception)
+      this.logger.error(`[${method} ${path}] HTTP ${status}: ${detail}`)
     }
 
     response.status(status).json(state ? { code: status, message, data: null, state } : { code: status, message, data: null })
