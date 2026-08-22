@@ -12,7 +12,11 @@ async function bootstrap() {
   // 与前端契约 BASE_URL 对齐（https://api.zzxun.cn/group-stars）
   app.setGlobalPrefix('group-stars')
   app.enableCors({
-    origin: ['https://gs.zzxun.cn'],
+    origin: [
+      'https://gs.zzxun.cn',
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
+    ],
     credentials: true,
   })
   app.getHttpAdapter().get('/health', (_request, response) => {
