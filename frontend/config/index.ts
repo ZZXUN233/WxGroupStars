@@ -3,6 +3,8 @@ import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import devConfig from './dev'
 import prodConfig from './prod'
 
+const apiBaseUrl = process.env.TARO_APP_BASE_URL || 'https://api.zzxun.cn/group-stars'
+
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig<'webpack5'>(async (merge) => {
   const baseConfig: UserConfigExport<'webpack5'> = {
@@ -21,6 +23,7 @@ export default defineConfig<'webpack5'>(async (merge) => {
       "@tarojs/plugin-generator"
     ],
     defineConstants: {
+      'process.env.TARO_APP_BASE_URL': JSON.stringify(apiBaseUrl)
     },
     copy: {
       patterns: [
