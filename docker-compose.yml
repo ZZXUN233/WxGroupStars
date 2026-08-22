@@ -8,6 +8,9 @@ services:
       - ./backend/.env
     ports:
       - "${API_PORT:-3000}:3000"
+    # 支持数据库运行在 Docker 宿主机（本地 WSL 或远程 Linux 服务器）。
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]

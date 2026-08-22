@@ -18,7 +18,7 @@ DATABASE_URL="mysql://root:数据库密码@mysql-host:3306/wgs"
 PORT=3000
 ```
 
-如果 MySQL 运行在同一台服务器，且 MySQL 监听宿主机 3306，请将连接地址中的主机名配置为 Docker 可访问的地址（例如 Linux Docker 使用宿主机网关地址），不要使用仅适用于本机 WSL 的 `host.docker.internal`。
+如果 MySQL 运行在同一台服务器，且 MySQL 监听宿主机 3306，可直接使用 `host.docker.internal`；Compose 已将其映射到 Docker 宿主机网关。数据库在独立服务器时，则将其替换为数据库服务器地址。
 
 3. 构建 H5 并发布到 Nginx 静态目录。H5 与微信小程序是两个独立产物：
 
