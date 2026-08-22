@@ -1,16 +1,13 @@
 services:
   group-stars-api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    image: ${IMAGE_NAME:-group-stars-api}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-zzxun.cn:5000}/group-stars-api:${IMAGE_TAG:-latest}
     container_name: group-stars-api
+    # 服务器部署前创建 backend/.env，至少配置 DATABASE_URL。
+    # 例如：mysql://root:password@mysql-host:3306/wgs
     env_file:
       - ./backend/.env
     ports:
       - "${API_PORT:-3000}:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]

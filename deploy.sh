@@ -21,20 +21,22 @@ compose() {
 }
 
 usage() {
-  printf '用法: %s {build|start|stop|restart|status|logs|frontend|install-frontend|health}\n' "$0"
+  printf '用法: %s {pull|start|stop|restart|status|logs|frontend|install-frontend|health}\n' "$0"
 }
 
 case "${1:-}" in
-  build)
-    compose build group-stars-api
+  pull)
+    compose pull group-stars-api
     ;;
   start)
+    compose pull group-stars-api
     compose up -d group-stars-api
     ;;
   stop)
     compose down
     ;;
   restart)
+    compose pull group-stars-api
     compose up -d --force-recreate group-stars-api
     ;;
   status)
