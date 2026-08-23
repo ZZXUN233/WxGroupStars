@@ -109,6 +109,8 @@ export default function Space() {
     if (!space) return
     await reviewMember(space.id, request.id, approved)
     setPendingMembers((list) => list.filter((item) => item.id !== request.id))
+    // 更新待审核数量
+    setSpace({ ...space, pendingCount: Math.max(0, (space.pendingCount || 1) - 1) })
     // 审核通过后刷新成员列表
     if (approved) {
       const mem = await getSpaceMembers(space.id)
