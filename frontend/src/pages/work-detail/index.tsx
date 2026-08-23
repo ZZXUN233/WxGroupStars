@@ -308,7 +308,29 @@ export default function WorkDetail() {
             className='external-box'
             onClick={() => {
               if (w.externalLink) {
-                Taro.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(w.externalLink)}` })
+                Taro.showActionSheet({
+                  itemList: ['复制链接', '在浏览器中打开'],
+                  success: (res) => {
+                    if (res.tapIndex === 0) {
+                      // 复制链接
+                      Taro.setClipboardData({
+                        data: w.externalLink!,
+                        success: () => {
+                          Taro.showToast({ title: '链接已复制', icon: 'success' })
+                        }
+                      })
+                    } else if (res.tapIndex === 1) {
+                      // 尝试在浏览器中打开（需要公众号关联）
+                      // 如果不支持，则复制链接
+                      Taro.setClipboardData({
+                        data: w.externalLink!,
+                        success: () => {
+                          Taro.showToast({ title: '链接已复制，请在浏览器中打开', icon: 'none', duration: 2000 })
+                        }
+                      })
+                    }
+                  }
+                })
               }
             }}
           >
