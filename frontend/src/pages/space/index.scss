@@ -137,11 +137,11 @@
 }
 
 .manage-btn {
-  font-size: 20px;
+  font-size: 24px;
   color: #4f46e5;
   background: #eef0fd;
   border: 1px solid #d9dcfb;
-  padding: 2px 14px;
+  padding: 8px 20px;
   border-radius: 999px;
   flex-shrink: 0;
 }
@@ -153,12 +153,12 @@
 }
 
 .share-btn {
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1.4;
   color: #4f46e5;
   background: #eef0fd;
   border: 1px solid #d9dcfb;
-  padding: 2px 14px;
+  padding: 8px 20px;
   border-radius: 999px;
   margin: 0;
   flex-shrink: 0;
@@ -278,9 +278,9 @@
 }
 
 .request-btn {
-  padding: 4px 12px;
+  padding: 8px 20px;
   border-radius: 8px;
-  font-size: 20px;
+  font-size: 24px;
 
   &.approve {
     color: #fff;

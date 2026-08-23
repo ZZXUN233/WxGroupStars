@@ -109,6 +109,11 @@ export default function Space() {
     if (!space) return
     await reviewMember(space.id, request.id, approved)
     setPendingMembers((list) => list.filter((item) => item.id !== request.id))
+    // 审核通过后刷新成员列表
+    if (approved) {
+      const mem = await getSpaceMembers(space.id)
+      setMembers(mem.data)
+    }
     Taro.showToast({ title: approved ? '已通过' : '已拒绝', icon: 'success' })
   }
 
