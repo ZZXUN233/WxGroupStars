@@ -88,6 +88,9 @@ export class AggregatesService {
       })
     }
 
+    // 3. 统一按创建时间倒序排列
+    works.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
     const dist: StarTrailDto['typeDistribution'] = {}
     works.forEach((work) => {
       const t = work.type as WorkType
