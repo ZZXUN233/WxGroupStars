@@ -2,7 +2,7 @@ import { ScrollView, Text, View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 import type { Work } from '../../types'
-import { getMyWorks } from '../../api'
+import { getMyWorks, getMySpaces } from '../../api'
 import { dateTime } from '../../utils/format'
 import { WORK_TYPE_LABEL } from '../../utils/workType'
 import './index.scss'
@@ -18,6 +18,19 @@ export default function Drafts() {
 
   useDidShow(() => { load() })
 
+  const viewWork = async (w: Work) => {
+    // 获取用户加入的群，用于跳转到作品详情页
+    const spacesRes = await getMySpaces()
+    const spaces = spacesRes.data
+    if (spaces.length > 0) {
+      // 跳转到第一个群的作品详情页
+      Taro.navigateTo({ url: `/pages/work-detail/index?workId=${w.id}&spaceId=${spaces[0].id}` })
+    } else {
+      // 没有加入任何群，跳转到编辑页
+      Taro.navigateTo({ url: `/pages/publish/index?workId=${w.id}` })
+    }
+  }
+
   const continueEdit = (w: Work) => {
     Taro.navigateTo({ url: `/pages/publish/index?workId=${w.id}` })
   }
@@ -28,15 +41,15 @@ export default function Drafts() {
     <ScrollView scrollY className='drafts'>
       {works.length ? (
         works.map((w) => (
-          <View key={w.id} className='draft-item' onClick={() => continueEdit(w)}>
-            <View className='draft-main'>
+          <View key={w.id} className='draft-item'>
+            <View className='draft-main' onClick={() => viewWork(w)}>
               <Text className='draft-title'>{w.title || '未命名草稿'}</Text>
               <View className='draft-meta'>
                 <Text className='draft-chip'>{w.isDraft ? '草稿' : '已发布'} · {WORK_TYPE_LABEL[w.type]}</Text>
                 <Text className='draft-time'>更新于 {dateTime(w.updatedAt)}</Text>
               </View>
             </View>
-            <Text className='draft-edit'>编辑作品 ›</Text>
+            <Text className='draft-edit' onClick={() => continueEdit(w)}>编辑作品 ›</Text>
           </View>
         ))
       ) : (

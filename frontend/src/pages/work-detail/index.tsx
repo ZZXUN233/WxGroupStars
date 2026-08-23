@@ -101,17 +101,24 @@ export default function WorkDetail() {
   const [replyTarget, setReplyTarget] = useState<{ parentId?: number; replyToUserId?: number; label: string } | null>(null)
   const [projectionId, setProjectionId] = useState(0)
   const [spaceId, setSpaceId] = useState(0)
+  const [workId, setWorkId] = useState(0)
 
   useLoad((params) => {
     const pid = Number(params?.projectionId || 0)
+    const wid = Number(params?.workId || 0)
     setProjectionId(pid)
     setSpaceId(Number(params?.spaceId || 0))
-    load(pid)
+    setWorkId(wid)
+    if (pid) {
+      load(pid)
+    } else if (wid) {
+      loadWorkOnly(wid)
+    }
   })
 
   useShareAppMessage(() => ({
-    title: projection ? `「${projection.work.title}」by ${displayName(projection.work.author.nickname)}` : '群星闪耀',
-    path: `/pages/work-detail/index?projectionId=${projectionId}&spaceId=${spaceId}`
+    title: projection ? `「${projection.work.title}」by ${displayName(projection.work.author.nickname)}` : workDetail ? `「${workDetail.title}」by ${displayName(workDetail.author.nickname)}` : '群星闪耀',
+    path: projectionId ? `/pages/work-detail/index?projectionId=${projectionId}&spaceId=${spaceId}` : `/pages/work-detail/index?workId=${workId}&spaceId=${spaceId}`
   }))
 
   const load = async (pid: number) => {
@@ -120,6 +127,14 @@ export default function WorkDetail() {
     setProjection(p.data)
     setComments(c.data)
     setWorkDetail(w.data)
+  }
+
+  // 仅加载作品信息（无投影）
+  const loadWorkOnly = async (wid: number) => {
+    const w = await getWork(wid)
+    setWorkDetail(w.data)
+    // 获取作品所属的投影信息（如果有的话）
+    // 这里可以添加获取作品投影的逻辑
   }
 
   const isAuthor = !!projection && user?.id === projection.work.author.id
@@ -159,34 +174,75 @@ export default function WorkDetail() {
   }
 
   const onAuthorManage = async () => {
-    if (!projection) return
+    const work = projection?.work || workDetail
+    if (!work) return
+
+    // 根据是否有投影显示不同的选项
+    const itemList = ['编辑作品']
+    if (projection) {
+      itemList.push('追加到其他群', '撤销在本群投影')
+    } else {
+      itemList.push('投影到群')
+    }
+    itemList.push('删除作品')
+
     Taro.showActionSheet({
-      itemList: ['编辑作品', '追加到其他群', '撤销在本群投影', '删除作品'],
+      itemList,
       fail: () => undefined,
       success: async (res) => {
         if (res.tapIndex === 0) {
-          Taro.navigateTo({ url: `/pages/publish/index?workId=${projection.work.id}` })
+          // 编辑作品
+          Taro.navigateTo({ url: `/pages/publish/index?workId=${work.id}` })
         } else if (res.tapIndex === 1) {
-          const spaces = (await getMySpaces()).data
-          const candidates = spaces.filter((s: Space) => s.id !== projection.spaceId)
-          if (!candidates.length) return Taro.showToast({ title: '没有可追加的群', icon: 'none' })
-          const pick = await Taro.showActionSheet({ itemList: candidates.map((s) => s.name), fail: () => undefined })
-          if (pick.tapIndex >= 0) {
-            const target = candidates[pick.tapIndex]
-            await addProjection(projection.work.id, target.id)
-            Taro.showToast({ title: `已追加到「${target.name}」`, icon: 'success' })
+          if (projection) {
+            // 追加到其他群
+            const spaces = (await getMySpaces()).data
+            const candidates = spaces.filter((s: Space) => s.id !== projection.spaceId)
+            if (!candidates.length) return Taro.showToast({ title: '没有可追加的群', icon: 'none' })
+            const pick = await Taro.showActionSheet({ itemList: candidates.map((s) => s.name), fail: () => undefined })
+            if (pick.tapIndex >= 0) {
+              const target = candidates[pick.tapIndex]
+              await addProjection(work.id, target.id)
+              Taro.showToast({ title: `已追加到「${target.name}」`, icon: 'success' })
+            }
+          } else {
+            // 投影到群（无投影作品）
+            const spaces = (await getMySpaces()).data
+            if (!spaces.length) return Taro.showToast({ title: '请先加入一个群', icon: 'none' })
+            const pick = await Taro.showActionSheet({ itemList: spaces.map((s) => s.name), fail: () => undefined })
+            if (pick.tapIndex >= 0) {
+              const target = spaces[pick.tapIndex]
+              await addProjection(work.id, target.id)
+              Taro.showToast({ title: `已投影到「${target.name}」`, icon: 'success' })
+              // 刷新页面数据
+              if (workId) {
+                loadWorkOnly(workId)
+              }
+            }
           }
         } else if (res.tapIndex === 2) {
-          const r = await Taro.showModal({ title: '撤销投影', content: '撤销后本群成员将看不到该作品，互动数据软保留。' })
-          if (r.confirm) {
-            await revokeProjection(projection.id)
-            Taro.showToast({ title: '已撤销', icon: 'success' })
-            setTimeout(() => Taro.navigateBack(), 500)
+          if (projection) {
+            // 撤销投影
+            const r = await Taro.showModal({ title: '撤销投影', content: '撤销后本群成员将看不到该作品，互动数据软保留。' })
+            if (r.confirm) {
+              await revokeProjection(projection.id)
+              Taro.showToast({ title: '已撤销', icon: 'success' })
+              setTimeout(() => Taro.navigateBack(), 500)
+            }
+          } else {
+            // 删除作品
+            const r = await Taro.showModal({ title: '删除作品', content: '将隐藏该作品全部投影，数据保留。' })
+            if (r.confirm) {
+              await deleteWork(work.id)
+              Taro.showToast({ title: '已删除', icon: 'success' })
+              setTimeout(() => Taro.navigateBack(), 500)
+            }
           }
         } else if (res.tapIndex === 3) {
+          // 删除作品
           const r = await Taro.showModal({ title: '删除作品', content: '将隐藏该作品全部投影，数据保留。' })
           if (r.confirm) {
-            await deleteWork(projection.work.id)
+            await deleteWork(work.id)
             Taro.showToast({ title: '已删除', icon: 'success' })
             setTimeout(() => Taro.navigateBack(), 500)
           }
@@ -236,11 +292,13 @@ export default function WorkDetail() {
           </View>
         )
     }
-  }, [projection, localMedia, mediaLoading, mediaError])
+  }, [projection, workDetail, localMedia, mediaLoading, mediaError])
 
-  if (!projection) return <View className='empty'>加载中…</View>
+  // 加载中状态
+  if (!projection && !workDetail) return <View className='empty'>加载中…</View>
 
-  const w = projection.work
+  // 使用 projection 或 workDetail 中的工作信息
+  const w = projection?.work || workDetail
   return (
     <View className='detail'>
       <ScrollView scrollY className='detail-scroll'>
@@ -251,7 +309,7 @@ export default function WorkDetail() {
           </View>
           <View className='work-meta'>
             <Text className='type-chip'>{WORK_TYPE_LABEL[w.type]}</Text>
-            <View className='meta-time'><Text className='time'>{dateTime(projection.projectedAt)}</Text></View>
+            <View className='meta-time'><Text className='time'>{dateTime(projection?.projectedAt || w.createdAt)}</Text></View>
           </View>
           <View className='author-line'>
             <View className='avatar avatar-sm'>
@@ -285,19 +343,29 @@ export default function WorkDetail() {
         ) : null}
 
         <View className='action-row'>
-          <View className={`action-btn ${projection.likedByMe ? 'liked' : ''}`} onClick={onLike}>
-            <Text>{projection.likedByMe ? '❤️' : '🤍'}</Text>
-            <Text>{projection.likeCount}</Text>
-          </View>
-          <View className='action-btn'>
-            <Text>💬</Text>
-            <Text>{projection.commentCount}</Text>
-          </View>
+          {projection ? (
+            <>
+              <View className={`action-btn ${projection.likedByMe ? 'liked' : ''}`} onClick={onLike}>
+                <Text>{projection.likedByMe ? '❤️' : '🤍'}</Text>
+                <Text>{projection.likeCount}</Text>
+              </View>
+              <View className='action-btn'>
+                <Text>💬</Text>
+                <Text>{projection.commentCount}</Text>
+              </View>
+            </>
+          ) : null}
           <Button className='share-btn' openType='share'>📤 分享</Button>
         </View>
 
-        <View className='section-title'>评论</View>
-        <CommentList comments={comments} onReply={onReply} onDelete={onDeleteComment} />
+        {projection ? (
+          <>
+            <View className='section-title'>评论</View>
+            <CommentList comments={comments} onReply={onReply} onDelete={onDeleteComment} />
+          </>
+        ) : (
+          <View className='empty'>投影到群后可查看和发表评论</View>
+        )}
       </ScrollView>
 
       {commentFullscreen ? (
