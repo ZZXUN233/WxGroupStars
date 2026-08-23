@@ -287,7 +287,7 @@ export default function Space() {
       ) : null}
       <View className='member-list card'>
         {(memberTab === 'pending' && canManage ? pendingMembers : members).map((m) => (
-          <View key={m.id} className='member-item' onClick={() => memberTab === 'members' && goMember(m)}>
+          <View key={m.id} className={`member-item ${memberTab === 'pending' ? 'pending-item' : ''}`} onClick={() => memberTab === 'members' && goMember(m)}>
             <View className='avatar'>
               {m.user.avatarUrl ? <Image src={m.user.avatarUrl} mode='aspectFill' /> : <Text>{initial(m.user.nickname)}</Text>}
             </View>
