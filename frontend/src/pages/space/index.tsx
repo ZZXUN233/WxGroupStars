@@ -290,7 +290,16 @@ export default function Space() {
       ) : null}
       <View className='member-list card'>
         {(memberTab === 'pending' && canManage ? pendingMembers : members).map((m) => (
-          <View key={m.id} className={`member-item ${memberTab === 'pending' ? 'pending-item' : ''}`} onClick={() => memberTab === 'members' && goMember(m)}>
+          <View key={m.id} className={`member-item ${memberTab === 'pending' ? 'pending-item' : ''}`} onClick={() => {
+            if (memberTab === 'members') {
+              // 群主/管理员点击成员可以管理，普通成员点击跳转详情
+              if (canManage && m.user.id !== space?.creatorId) {
+                manageMember(m)
+              } else {
+                goMember(m)
+              }
+            }
+          }}>
             <View className='avatar'>
               {m.user.avatarUrl ? <Image src={m.user.avatarUrl} mode='aspectFill' /> : <Text>{initial(m.user.nickname)}</Text>}
             </View>
