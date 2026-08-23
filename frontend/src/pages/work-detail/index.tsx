@@ -137,7 +137,7 @@ export default function WorkDetail() {
     // 这里可以添加获取作品投影的逻辑
   }
 
-  const isAuthor = !!projection && user?.id === projection.work.author.id
+  const isAuthor = (projection && user?.id === projection.work.author.id) || (workDetail && user?.id === workDetail.author.id)
 
   const onLike = async () => {
     if (!projection) return
