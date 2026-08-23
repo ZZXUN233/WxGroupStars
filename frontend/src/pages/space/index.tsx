@@ -279,7 +279,7 @@ export default function Space() {
         <Text>群成员</Text>
         {space && <View className='member-actions'>
           {space.myRole !== 'owner' ? <Text className='member-action-btn' onClick={leaveCurrentSpace}>退出</Text> : null}
-          <Text className='member-action-btn invite-member-btn' onClick={() => Taro.navigateTo({ url: `/pages/space-invite/index?spaceId=${space.id}` })}>＋ 邀请成员</Text>
+          {canManage ? <Text className='member-action-btn invite-member-btn' onClick={() => Taro.navigateTo({ url: `/pages/space-invite/index?spaceId=${space.id}` })}>＋ 邀请成员</Text> : null}
         </View>}
       </View>
       {canManage ? (
