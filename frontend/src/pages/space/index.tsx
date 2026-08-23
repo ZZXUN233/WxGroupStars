@@ -144,7 +144,8 @@ export default function Space() {
     if (!confirmed.confirm) return
     await leaveSpace(space.id)
     Taro.showToast({ title: '已退出', icon: 'success' })
-    setTimeout(() => Taro.navigateBack(), 500)
+    // 使用 reLaunch 确保首页 feed 被刷新
+    setTimeout(() => Taro.reLaunch({ url: '/pages/index/index' }), 500)
   }
 
   // 群空间分享卡片：群友在群内打开 → 门禁自动加入（ADR-0008）
