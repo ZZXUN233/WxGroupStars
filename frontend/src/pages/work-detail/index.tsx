@@ -265,14 +265,15 @@ export default function WorkDetail() {
     }
   }
 
-  const mediaUrls = projection?.work.mediaUrls || []
-  const rawMedia = projection?.work.type === 'audio_video' ? mediaUrls[0] : undefined
+  const currentWork = projection?.work || workDetail
+  const mediaUrls = currentWork?.mediaUrls || []
+  const rawMedia = currentWork?.type === 'audio_video' ? mediaUrls[0] : undefined
   const [audioNeedsDownload, setAudioNeedsDownload] = useState(false)
   const audioFallback = () => setAudioNeedsDownload(true)
   // 音频和视频都需要下载到本地播放（绕开防盗链）
   const { src: localMedia, loading: mediaLoading, error: mediaError, progress: mediaProgress } = useLocalMedia(rawMedia, true)
   const workBody = useMemo(() => {
-    const w = projection?.work
+    const w = currentWork
     if (!w) return null
     switch (w.type) {
       case 'text':
