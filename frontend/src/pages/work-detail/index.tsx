@@ -22,39 +22,50 @@ const isAudioUrl = (u: string) => /\.(mp3|m4a|wav|aac|flac|ogg)(\?|$)/i.test(u)
  * 临时文件（微信会强制注入 servicewechat.com Referer，已在 COS 防盗链白名单内，实测 206），
  * 再播本地路径，绕开防盗链。
  */
-function useLocalMedia(url: string | undefined, enabled = true): { src: string; loading: boolean; error: string } {
+function useLocalMedia(url: string | undefined, enabled = true): { src: string; loading: boolean; error: string; progress: number } {
   const [src, setSrc] = useState(url || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     let cancelled = false
     if (!url) {
-      setSrc(''); setLoading(false); setError('')
+      setSrc(''); setLoading(false); setError(''); setProgress(0)
       return
     }
     if (!enabled) {
-      setSrc(url); setLoading(false); setError('')
+      setSrc(url); setLoading(false); setError(''); setProgress(100)
       return
     }
     // 本地文件直接用，无需下载
     if (url.startsWith('wxfile://') || url.startsWith('http://tmp') || url.startsWith('https://tmp')) {
-      setSrc(url); setLoading(false); setError('')
+      setSrc(url); setLoading(false); setError(''); setProgress(100)
       return
     }
-    setSrc(''); setLoading(true); setError('')
-    Taro.downloadFile({ url, timeout: 30000 })
-      .then((res) => {
+    setSrc(''); setLoading(true); setError(''); setProgress(0)
+
+    const downloadTask = Taro.downloadFile({
+      url,
+      timeout: 60000,
+      success: (res) => {
         if (cancelled) return
         if (res.statusCode === 200) setSrc(res.tempFilePath)
         else setError(`媒体下载失败（${res.statusCode}）`)
-      })
-      .catch(() => { if (!cancelled) setError('媒体下载失败，请稍后重试') })
-      .finally(() => { if (!cancelled) setLoading(false) })
+      },
+      fail: () => { if (!cancelled) setError('媒体下载失败，请稍后重试') },
+      complete: () => { if (!cancelled) setLoading(false) }
+    })
+
+    // 监听下载进度
+    downloadTask.onProgressUpdate((res) => {
+      if (!cancelled) setProgress(res.progress)
+    })
+
     return () => { cancelled = true }
   }, [url, enabled])
 
-  return { src, loading, error }
+  return { src, loading, error, progress }
 }
 
 /** 音频播放器：createInnerAudioContext 编程式播放（微信 audio 组件已废弃） */
@@ -255,7 +266,7 @@ export default function WorkDetail() {
   const rawMedia = projection?.work.type === 'audio_video' ? mediaUrls[0] : undefined
   const [audioNeedsDownload, setAudioNeedsDownload] = useState(false)
   const audioFallback = () => setAudioNeedsDownload(true)
-  const { src: localMedia, loading: mediaLoading, error: mediaError } = useLocalMedia(rawMedia, !isAudioUrl(rawMedia || '') || audioNeedsDownload)
+  const { src: localMedia, loading: mediaLoading, error: mediaError, progress: mediaProgress } = useLocalMedia(rawMedia, !isAudioUrl(rawMedia || '') || audioNeedsDownload)
   const workBody = useMemo(() => {
     const w = projection?.work
     if (!w) return null
@@ -271,7 +282,16 @@ export default function WorkDetail() {
         )
       case 'audio_video':
         if (!rawMedia) return <View className='media-box'>未找到媒体文件</View>
-        if (mediaLoading) return <View className='media-box'>媒体加载中…</View>
+        if (mediaLoading) return (
+          <View className='media-box'>
+            <View className='download-progress'>
+              <View className='download-progress-text'>媒体加载中… {mediaProgress}%</View>
+              <View className='download-progress-bar'>
+                <View className='download-progress-fill' style={{ width: `${mediaProgress}%` }} />
+              </View>
+            </View>
+          </View>
+        )
         if (mediaError) return <View className='media-box'>⚠️ {mediaError}</View>
         return isAudioUrl(rawMedia)
           ? <AudioPlayer src={localMedia} onError={audioFallback} />
