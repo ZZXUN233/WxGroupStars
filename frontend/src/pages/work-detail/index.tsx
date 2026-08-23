@@ -272,12 +272,13 @@ export default function WorkDetail() {
   const audioFallback = () => setAudioNeedsDownload(true)
   // 音频和视频都需要下载到本地播放（绕开防盗链）
   const { src: localMedia, loading: mediaLoading, error: mediaError, progress: mediaProgress } = useLocalMedia(rawMedia, true)
-  const workBody = useMemo(() => {
+
+  // 渲染作品内容
+  const renderWorkBody = () => {
     const w = currentWork
     if (!w) return null
     switch (w.type) {
       case 'text':
-        // 文字正文走 Markdown 渲染（标题/列表/代码块等，Markdown 组件）
         return <Markdown content={w.textContent || ''} />
       case 'image':
         return (
@@ -313,7 +314,6 @@ export default function WorkDetail() {
                   itemList: ['复制链接', '在浏览器中打开'],
                   success: (res) => {
                     if (res.tapIndex === 0) {
-                      // 复制链接
                       Taro.setClipboardData({
                         data: w.externalLink!,
                         success: () => {
@@ -321,8 +321,6 @@ export default function WorkDetail() {
                         }
                       })
                     } else if (res.tapIndex === 1) {
-                      // 尝试在浏览器中打开（需要公众号关联）
-                      // 如果不支持，则复制链接
                       Taro.setClipboardData({
                         data: w.externalLink!,
                         success: () => {
@@ -339,7 +337,7 @@ export default function WorkDetail() {
           </View>
         )
     }
-  }, [projection, workDetail, localMedia, mediaLoading, mediaError])
+  }
 
   // 加载中状态
   if (!projection && !workDetail) return <View className='empty'>加载中…</View>
@@ -375,7 +373,7 @@ export default function WorkDetail() {
         {/* 非图片类型的封面展示（图片类型首图已在主体滚动条中） */}
         {w.coverUrl && w.type !== 'image' ? <Image className='detail-cover' src={w.coverUrl} mode='widthFix' /> : null}
 
-        {workBody}
+        {renderWorkBody()}
 
         {/* 全类型内容说明（文字类型即正文已渲染，其余在主体下方展示介绍/心得） */}
         {w.type !== 'text' && w.textContent ? (
