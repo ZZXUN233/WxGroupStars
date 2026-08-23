@@ -80,6 +80,9 @@ export interface WorkDto {
 }
 
 export interface WorkProjectedSpaceDto {
+  /** 投影 ID（撤销投影时使用） */
+  projectionId: number
+  /** 群空间 ID */
   id: number
   name: string
 }

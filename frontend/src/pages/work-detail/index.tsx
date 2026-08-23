@@ -1,10 +1,10 @@
 import { Button, Image, Input, ScrollView, Text, Textarea, Video, View } from '@tarojs/components'
 import Taro, { useLoad, useShareAppMessage } from '@tarojs/taro'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import CommentList from '../../components/CommentList'
 import Markdown from '../../components/Markdown'
 import { useApp } from '../../store'
-import type { Comment, Projection, Space, WorkDetail } from '../../types'
+import type { Comment, Projection, WorkDetail } from '../../types'
 import { dateTime, displayName, initial } from '../../utils/format'
 import { WORK_TYPE_LABEL } from '../../utils/workType'
 import {
@@ -16,11 +16,20 @@ import './index.scss'
 /** 按 URL 扩展名区分音频/视频（audio_video 类型单媒体） */
 const isAudioUrl = (u: string) => /\.(mp3|m4a|wav|aac|flac|ogg)(\?|$)/i.test(u)
 
+/** 秒数格式化为 mm:ss */
+const formatTime = (s: number): string => {
+  if (!Number.isFinite(s) || s <= 0) return '00:00'
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+}
+
 /**
- * 网络媒体防盗链兜底：COS 桶拒绝空 Referer 的请求，<video>/createInnerAudioContext 原生播放器的
- * 请求 Referer 不受 JS 控制、真机可能不带 → 403 播不了。改用 Taro.downloadFile 先下载到本地
- * 临时文件（微信会强制注入 servicewechat.com Referer，已在 COS 防盗链白名单内，实测 206），
- * 再播本地路径，绕开防盗链。
+ * 音频/视频播放源（COS 已放开防盗链，默认直连网络 URL，由原生播放器直接加载）。
+ * enabled=false：直接用 url 作为播放源（直连）。
+ * enabled=true：直连失败后的兜底——Taro.downloadFile 下载到本地临时文件再播。
+ *   历史上 COS 防盗链拒绝空 Referer、原生播放器 403，downloadFile 会注入
+ *   servicewechat.com Referer（白名单内）才能下载；现在仅个别设备/兼容性场景启用。
  */
 function useLocalMedia(url: string | undefined, enabled = true): { src: string; loading: boolean; error: string; progress: number } {
   const [src, setSrc] = useState(url || '')
@@ -68,13 +77,23 @@ function useLocalMedia(url: string | undefined, enabled = true): { src: string; 
   return { src, loading, error, progress }
 }
 
-/** 音频播放器：createInnerAudioContext 编程式播放（微信 audio 组件已废弃） */
+/** 音频播放器：createInnerAudioContext 编程式播放（微信 audio 组件已废弃），带进度条/时间/点击跳转 */
 function AudioPlayer({ src, onError }: { src: string; onError?: () => void }) {
   const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+
   const ctx = useMemo(() => {
     const c = Taro.createInnerAudioContext()
     c.src = src
-    c.onEnded(() => setPlaying(false))
+    c.onCanplay(() => {
+      if (c.duration && Number.isFinite(c.duration)) setDuration(c.duration)
+    })
+    c.onTimeUpdate(() => {
+      setCurrentTime(c.currentTime || 0)
+      if (c.duration && Number.isFinite(c.duration)) setDuration(c.duration)
+    })
+    c.onEnded(() => { setPlaying(false); setCurrentTime(0) })
     c.onError(() => { setPlaying(false); onError?.() })
     return c
   }, [src, onError])
@@ -91,12 +110,41 @@ function AudioPlayer({ src, onError }: { src: string; onError?: () => void }) {
     }
   }
 
+  // 点击进度条跳转：用触摸点页面坐标与进度条位置计算比例后 seek
+  const seekTo = (e: any) => {
+    e.stopPropagation?.()
+    if (!duration) return
+    const touchX = e.detail?.x ?? e.changedTouches?.[0]?.pageX ?? e.touches?.[0]?.pageX
+    if (touchX == null) return
+    Taro.createSelectorQuery()
+      .select('.audio-progress-track')
+      .boundingClientRect((rect: any) => {
+        if (!rect || !rect.width) return
+        const ratio = Math.min(1, Math.max(0, (touchX - rect.left) / rect.width))
+        const target = ratio * duration
+        ctx.seek(target)
+        setCurrentTime(target)
+      })
+      .exec()
+  }
+
+  const percent = duration ? Math.min(100, (currentTime / duration) * 100) : 0
+
   return (
-    <View className='audio-player' onClick={toggle}>
-      <Text className='audio-icon'>{playing ? '⏸' : '▶️'}</Text>
-      <View className='audio-meta'>
-        <Text className='audio-title'>{playing ? '播放中…' : '点击播放音频'}</Text>
-        <Text className='audio-sub'>{src.split('/').pop()}</Text>
+    <View className='audio-player'>
+      <View className='audio-main' onClick={toggle}>
+        <Text className='audio-icon'>{playing ? '⏸' : '▶️'}</Text>
+        <View className='audio-meta'>
+          <Text className='audio-title'>{playing ? '播放中…' : '点击播放音频'}</Text>
+          <Text className='audio-sub'>{src.split('/').pop()}</Text>
+        </View>
+      </View>
+      <View className='audio-progress-track' onClick={seekTo}>
+        <View className='audio-progress-fill' style={{ width: `${percent}%` }} />
+      </View>
+      <View className='audio-times'>
+        <Text className='audio-time'>{formatTime(currentTime)}</Text>
+        <Text className='audio-time'>{duration ? formatTime(duration) : '--:--'}</Text>
       </View>
     </View>
   )
@@ -144,8 +192,6 @@ export default function WorkDetail() {
   const loadWorkOnly = async (wid: number) => {
     const w = await getWork(wid)
     setWorkDetail(w.data)
-    // 获取作品所属的投影信息（如果有的话）
-    // 这里可以添加获取作品投影的逻辑
   }
 
   const isAuthor = (projection && user?.id === projection.work.author.id) || (workDetail && user?.id === workDetail.author.id)
@@ -181,7 +227,7 @@ export default function WorkDetail() {
     // 父评论或子回复都可能是删除目标，一次遍历同时清理
     setComments((list) => list
       .filter((x) => x.id !== c.id)
-      .map((x) => ({ ...x, replies: x.replies.filter((r) => r.id !== c.id) })))
+      .map((x) => ({ ...x, replies: x.replies.filter((rep) => rep.id !== c.id) })))
   }
 
   const onAuthorManage = async () => {
@@ -214,12 +260,12 @@ export default function WorkDetail() {
   }
 
   // 管理投影：显示作品在哪些群有投影，支持勾选/取消
-  const manageProjections = async (workId: number) => {
+  const manageProjections = async (targetWorkId: number) => {
     const spaces = (await getMySpaces()).data
     if (!spaces.length) return Taro.showToast({ title: '请先加入一个群', icon: 'none' })
 
     // 获取作品当前的投影列表
-    const workDetailRes = await getWork(workId)
+    const workDetailRes = await getWork(targetWorkId)
     const projectedSpaceIds = new Set(workDetailRes.data.projectedSpaces.map(s => s.id))
 
     // 构建选项列表，显示每个群的投影状态
@@ -236,30 +282,27 @@ export default function WorkDetail() {
     if (pick.tapIndex >= 0) {
       const selected = options[pick.tapIndex]
       if (selected.checked) {
-        // 已投影，撤销投影
+        // 已投影，撤销投影（projectedSpaces 已带 projectionId，撤销该群对应的投影）
         const r = await Taro.showModal({
           title: '撤销投影',
           content: `确定撤销在「${selected.name}」的投影吗？`
         })
         if (r.confirm) {
-          // 找到该群的投影 ID 并撤销
           const projectionToRevoke = workDetailRes.data.projectedSpaces.find(s => s.id === selected.id)
           if (projectionToRevoke) {
-            // 需要获取投影详情来撤销
-            // 这里简化处理，直接调用撤销 API
-            await revokeProjection(projection.id)
+            await revokeProjection(projectionToRevoke.projectionId)
             Taro.showToast({ title: '已撤销', icon: 'success' })
             // 刷新页面
-            if (workId) loadWorkOnly(workId)
+            if (targetWorkId) loadWorkOnly(targetWorkId)
             else if (projectionId) load(projectionId)
           }
         }
       } else {
         // 未投影，添加投影
-        await addProjection(workId, selected.id)
+        await addProjection(targetWorkId, selected.id)
         Taro.showToast({ title: `已投影到「${selected.name}」`, icon: 'success' })
         // 刷新页面
-        if (workId) loadWorkOnly(workId)
+        if (targetWorkId) loadWorkOnly(targetWorkId)
         else if (projectionId) load(projectionId)
       }
     }
@@ -268,10 +311,27 @@ export default function WorkDetail() {
   const currentWork = projection?.work || workDetail
   const mediaUrls = currentWork?.mediaUrls || []
   const rawMedia = currentWork?.type === 'audio_video' ? mediaUrls[0] : undefined
-  const [audioNeedsDownload, setAudioNeedsDownload] = useState(false)
-  const audioFallback = () => setAudioNeedsDownload(true)
-  // 音频和视频都需要下载到本地播放（绕开防盗链）
-  const { src: localMedia, loading: mediaLoading, error: mediaError, progress: mediaProgress } = useLocalMedia(rawMedia, true)
+  // COS 已放开防盗链：媒体默认直连加载；直连失败（个别设备/兼容性）才下载到本地兜底
+  const [mediaNeedsDownload, setMediaNeedsDownload] = useState(false)
+  const onMediaError = useCallback(() => setMediaNeedsDownload(true), [])
+  const { src: mediaSrc, loading: mediaLoading, error: mediaError, progress: mediaProgress } = useLocalMedia(rawMedia, mediaNeedsDownload)
+
+  // 外链复制：小程序无法直接唤起系统浏览器，复制后引导用户到浏览器打开
+  const copyExternalLink = () => {
+    const link = currentWork?.externalLink
+    if (!link) return
+    Taro.setClipboardData({
+      data: link,
+      success: () => {
+        Taro.showModal({
+          title: '链接已复制',
+          content: '小程序内无法直接打开外部浏览器，请打开手机浏览器（Safari / Chrome 等）粘贴链接访问。',
+          showCancel: false,
+          confirmText: '知道了',
+        })
+      }
+    })
+  }
 
   // 渲染作品内容
   const renderWorkBody = () => {
@@ -300,50 +360,23 @@ export default function WorkDetail() {
         )
         if (mediaError) return <View className='media-box'>⚠️ {mediaError}</View>
         return isAudioUrl(rawMedia)
-          ? <AudioPlayer src={localMedia} onError={audioFallback} />
-          : <Video className='detail-video' src={localMedia} controls />
+          ? <AudioPlayer src={mediaSrc} onError={onMediaError} />
+          : <Video className='detail-video' src={mediaSrc} controls onError={onMediaError} />
       case 'tech':
         return <View className='tech-box'>{w.techCode}</View>
       case 'external':
         return (
-          <View
-            className='external-box'
-            onClick={() => {
-              if (w.externalLink) {
-                Taro.showActionSheet({
-                  itemList: ['复制链接', '在浏览器中打开'],
-                  success: (res) => {
-                    if (res.tapIndex === 0) {
-                      Taro.setClipboardData({
-                        data: w.externalLink!,
-                        success: () => {
-                          Taro.showToast({ title: '链接已复制', icon: 'success' })
-                        }
-                      })
-                    } else if (res.tapIndex === 1) {
-                      Taro.setClipboardData({
-                        data: w.externalLink!,
-                        success: () => {
-                          Taro.showToast({ title: '链接已复制，请在浏览器中打开', icon: 'none', duration: 2000 })
-                        }
-                      })
-                    }
-                  }
-                })
-              }
-            }}
-          >
-            🔗 {w.externalLink}
+          <View className='external-box'>
+            <View className='external-link' onClick={copyExternalLink}>🔗 {w.externalLink}</View>
+            <View className='external-copy-btn' onClick={copyExternalLink}>复制链接</View>
           </View>
         )
     }
   }
 
-  // 加载中状态
-  if (!projection && !workDetail) return <View className='empty'>加载中…</View>
-
-  // 使用 projection 或 workDetail 中的工作信息
+  // 使用 projection 或 workDetail 中的工作信息（都未加载完成时显示加载中）
   const w = projection?.work || workDetail
+  if (!w) return <View className='empty'>加载中…</View>
   return (
     <View className='detail'>
       <ScrollView scrollY className='detail-scroll'>

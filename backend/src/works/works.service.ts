@@ -28,7 +28,7 @@ export class WorksService {
             isActive: true,
             space: { isActive: true, members: { some: { userId, isActive: true, status: 'active' } } },
           },
-          select: { space: { select: { id: true, name: true } } },
+          select: { id: true, space: { select: { id: true, name: true } } },
           orderBy: { createdAt: 'asc' },
         },
       },
@@ -36,7 +36,7 @@ export class WorksService {
     if (!work || !work.isActive) throw new NotFoundException('作品不存在')
     // 草稿仅作者本人可见，对外表现为不存在（ADR-0009 草稿语义）
     if (work.isDraft && Number(work.authorId) !== userId) throw new NotFoundException('作品不存在')
-    return { ...workToDto(work), projectedSpaces: work.projections.map(({ space }) => ({ id: Number(space.id), name: space.name })) }
+    return { ...workToDto(work), projectedSpaces: work.projections.map((p) => ({ projectionId: Number(p.id), id: Number(p.space.id), name: p.space.name })) }
   }
 
   /** 当前用户的草稿列表（最新在前），供「我的草稿」入口 */
