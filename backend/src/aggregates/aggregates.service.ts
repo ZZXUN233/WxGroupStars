@@ -42,9 +42,12 @@ export class AggregatesService {
       .filter((sid) => mySpaceIds.has(sid))
 
     const works: StarTrailWorkDto[] = []
+    const seenWorkIds = new Set<number>()
+
     // 指定了展示群但与该群无共同关系 → 直接空星轨（ADR-0010 上下文口径）
     const scopedToShared = spaceId ? mySpaceIds.has(spaceId) : true
     if ((sharedSpaceIds.length || spaceId) && scopedToShared) {
+      // 1. 查询有投影的作品
       const rows = await this.prisma.projection.findMany({
         where: {
           ...(spaceId ? { spaceId } : { spaceId: { in: sharedSpaceIds } }),
@@ -54,12 +57,33 @@ export class AggregatesService {
         include: { work: { include: { author: true } } },
         orderBy: { createdAt: 'desc' },
       })
-      const seenWorkIds = new Set<number>()
       rows.forEach((p) => {
         const workId = Number(p.work.id)
         if (!seenWorkIds.has(workId)) {
           seenWorkIds.add(workId)
           works.push({ ...workToDto(p.work), projectionId: Number(p.id), spaceId: Number(p.spaceId) })
+        }
+      })
+    }
+
+    // 2. 查询未投影的作品（仅查看自己的星轨时显示）
+    if (userId === targetId) {
+      const unprojectedWorks = await this.prisma.work.findMany({
+        where: {
+          authorId: targetId,
+          isActive: true,
+          // 排除已有投影的作品
+          id: { notIn: Array.from(seenWorkIds) },
+        },
+        include: { author: true },
+        orderBy: { createdAt: 'desc' },
+      })
+      unprojectedWorks.forEach((w) => {
+        const workId = Number(w.id)
+        if (!seenWorkIds.has(workId)) {
+          seenWorkIds.add(workId)
+          // 未投影作品使用 0 作为 projectionId 和 spaceId
+          works.push({ ...workToDto(w), projectionId: 0, spaceId: 0 })
         }
       })
     }

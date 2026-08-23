@@ -7,7 +7,12 @@ import './WorkCard.scss'
 
 export default function StarTrailWorkCard({ work }: { work: StarTrailWork }) {
   const goDetail = () => {
-    Taro.navigateTo({ url: `/pages/work-detail/index?projectionId=${work.projectionId}&spaceId=${work.spaceId}` })
+    // 无投影作品跳转到 work-detail 使用 workId
+    if (work.projectionId === 0) {
+      Taro.navigateTo({ url: `/pages/work-detail/index?workId=${work.id}` })
+    } else {
+      Taro.navigateTo({ url: `/pages/work-detail/index?projectionId=${work.projectionId}&spaceId=${work.spaceId}` })
+    }
   }
 
   return (
