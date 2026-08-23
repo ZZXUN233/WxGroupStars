@@ -269,7 +269,8 @@ export default function WorkDetail() {
   const rawMedia = projection?.work.type === 'audio_video' ? mediaUrls[0] : undefined
   const [audioNeedsDownload, setAudioNeedsDownload] = useState(false)
   const audioFallback = () => setAudioNeedsDownload(true)
-  const { src: localMedia, loading: mediaLoading, error: mediaError, progress: mediaProgress } = useLocalMedia(rawMedia, !isAudioUrl(rawMedia || '') || audioNeedsDownload)
+  // 音频和视频都需要下载到本地播放（绕开防盗链）
+  const { src: localMedia, loading: mediaLoading, error: mediaError, progress: mediaProgress } = useLocalMedia(rawMedia, true)
   const workBody = useMemo(() => {
     const w = projection?.work
     if (!w) return null
