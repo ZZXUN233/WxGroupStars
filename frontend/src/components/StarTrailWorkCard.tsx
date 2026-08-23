@@ -1,7 +1,7 @@
 import { Image, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import type { StarTrailWork } from '../types'
-import { displayName, initial } from '../utils/format'
+import { displayName, initial, timeAgo } from '../utils/format'
 import { WORK_TYPE_EMOJI, WORK_TYPE_LABEL } from '../utils/workType'
 import './WorkCard.scss'
 
@@ -29,6 +29,9 @@ export default function StarTrailWorkCard({ work }: { work: StarTrailWork }) {
             <Text className='work-author-name'>{displayName(work.author.nickname)}</Text>
           </View>
           <Text className='work-type'>{WORK_TYPE_LABEL[work.type]}</Text>
+        </View>
+        <View className='work-stats'>
+          <Text className='time'>{timeAgo(work.createdAt)}</Text>
         </View>
       </View>
     </View>
