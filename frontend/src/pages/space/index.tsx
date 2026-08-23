@@ -33,7 +33,7 @@ export default function Space() {
   const [timeline, setTimeline] = useState<Projection[]>([])
 
   useLoad((params) => {
-    const id = Number(params?.id || 0)
+    const id = Number(params?.id || params?.spaceId || 0)
     setSpaceId(id)
     load(id)
   })

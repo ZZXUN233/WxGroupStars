@@ -24,9 +24,15 @@ function App({ children }: PropsWithChildren<any>) {
 
   useEffect(() => {
     Taro.onAppShow(async (options: AppShowOptions) => {
-      const { shareTicket, query } = options
+      const { shareTicket, query, path } = options
+      console.log('[App onAppShow]', { shareTicket, query, path })
       if (!shareTicket) return
-      const spaceId = Number(query?.spaceId || query?.id || 0)
+      // 从 path 中解析参数（微信 onAppShow 的 query 可能不完整）
+      const url = new URL(path || '', 'http://localhost')
+      const pathParams = Object.fromEntries(url.searchParams)
+      const mergedQuery = { ...query, ...pathParams }
+      const spaceId = Number(mergedQuery?.spaceId || mergedQuery?.id || 0)
+      console.log('[App onAppShow] spaceId:', spaceId, 'mergedQuery:', mergedQuery)
       if (!spaceId) return
       // 同一 ticket 只处理一次，避免热启动重复加入/跳转
       if (shareTicket === handledTicket.current) return
