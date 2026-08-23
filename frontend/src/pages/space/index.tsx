@@ -223,6 +223,12 @@ export default function Space() {
           {accessInfo.state !== 'pending' ? (
             <View className={`apply-btn ${applying ? 'disabled' : ''}`} onClick={applyForAccess}>申请加入</View>
           ) : null}
+          <View className='access-actions'>
+            <View className='access-action-btn' onClick={() => Taro.reLaunch({ url: '/pages/index/index' })}>返回首页</View>
+            {accessInfo.state === 'pending' ? (
+              <View className='access-action-btn primary' onClick={() => load(spaceId, slice)}>刷新状态</View>
+            ) : null}
+          </View>
         </View>
       </View>
     )

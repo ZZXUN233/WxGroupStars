@@ -90,6 +90,30 @@
   &.disabled { opacity: .55; }
 }
 
+.access-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.access-action-btn {
+  flex: 1;
+  padding: 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 600;
+  color: #4f46e5;
+  background: #eef0fd;
+  border: 1px solid #d9dcfb;
+  border-radius: 12px;
+
+  &.primary {
+    color: #fff;
+    background: #4f46e5;
+    border-color: #4f46e5;
+  }
+}
+
 .space-head {
   display: flex;
   align-items: center;
