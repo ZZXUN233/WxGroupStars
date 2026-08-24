@@ -55,9 +55,13 @@ function App({ children }: PropsWithChildren<any>) {
         }
 
         const projectionId = Number(query?.projectionId || 0)
-        const target = projectionId
-          ? `/pages/work-detail/index?projectionId=${projectionId}&spaceId=${spaceId}`
-          : `/pages/space/index?id=${spaceId}`
+        // 安全审计 H-6：校验 ID 为正整数再拼接 URL
+        const safeProjectionId = Number.isInteger(projectionId) && projectionId > 0 ? projectionId : 0
+        const safeSpaceId = Number.isInteger(spaceId) && spaceId > 0 ? spaceId : 0
+        if (!safeSpaceId) return
+        const target = safeProjectionId
+          ? `/pages/work-detail/index?projectionId=${safeProjectionId}&spaceId=${safeSpaceId}`
+          : `/pages/space/index?id=${safeSpaceId}`
         Taro.reLaunch({ url: target })
       } catch (err) {
         Taro.showToast({ title: (err as { message?: string }).message || '加入群失败', icon: 'none' })

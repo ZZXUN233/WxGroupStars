@@ -161,6 +161,7 @@ export default function WorkDetail() {
   const [projectionId, setProjectionId] = useState(0)
   const [spaceId, setSpaceId] = useState(0)
   const [workId, setWorkId] = useState(0)
+  const [pageError, setPageError] = useState('')
 
   useLoad((params) => {
     const pid = Number(params?.projectionId || 0)
@@ -181,17 +182,27 @@ export default function WorkDetail() {
   }))
 
   const load = async (pid: number) => {
-    const p = await getProjection(pid)
-    const [c, w] = await Promise.all([getComments(pid), getWork(p.data.work.id)])
-    setProjection(p.data)
-    setComments(c.data)
-    setWorkDetail(w.data)
+    try {
+      const p = await getProjection(pid)
+      const [c, w] = await Promise.all([getComments(pid), getWork(p.data.work.id)])
+      setProjection(p.data)
+      setComments(c.data)
+      setWorkDetail(w.data)
+    } catch (err) {
+      const msg = (err as { message?: string }).message || '加载失败'
+      setPageError(msg)
+    }
   }
 
   // 仅加载作品信息（无投影）
   const loadWorkOnly = async (wid: number) => {
-    const w = await getWork(wid)
-    setWorkDetail(w.data)
+    try {
+      const w = await getWork(wid)
+      setWorkDetail(w.data)
+    } catch (err) {
+      const msg = (err as { message?: string }).message || '加载失败'
+      setPageError(msg)
+    }
   }
 
   const isAuthor = (projection && user?.id === projection.work.author.id) || (workDetail && user?.id === workDetail.author.id)
@@ -376,6 +387,14 @@ export default function WorkDetail() {
 
   // 使用 projection 或 workDetail 中的工作信息（都未加载完成时显示加载中）
   const w = projection?.work || workDetail
+  if (pageError) {
+    return (
+      <View className='empty'>
+        <Text>{pageError}</Text>
+        <View className='btn' style={{ marginTop: '24px' }} onClick={() => Taro.navigateBack()}>返回上一页</View>
+      </View>
+    )
+  }
   if (!w) return <View className='empty'>加载中…</View>
   return (
     <View className='detail'>

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Patch, Post } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { CurrentUser } from '../common/decorators/current-user.decorator'
 import type { AuthUser } from '../common/decorators/current-user.decorator'
 import { Public } from '../common/decorators/public.decorator'
@@ -10,6 +11,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  // 安全审计 C-2：登录接口加强限流，60 秒内最多 10 次
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.code)

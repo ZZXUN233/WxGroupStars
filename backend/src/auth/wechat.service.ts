@@ -28,6 +28,10 @@ export class WechatService {
     const secret = this.config.get<string>('WX_SECRET', '')
 
     if (!appid || !secret) {
+      // 生产环境必须配置微信凭据，否则拒绝启动（安全审计 C-1）
+      if (process.env.NODE_ENV === 'production') {
+        throw new UnauthorizedException('服务配置异常，请联系管理员')
+      }
       // dev 模式身份必须稳定：微信开发者工具每次重编译 code 都会变，
       // 若直接 dev_${code} 会导致「每次登录都是新用户」、旧群/作品全部丢失。
       // 固定 openid（.env 的 DEV_OPENID 可覆盖），模拟多用户时手动改值即可。
