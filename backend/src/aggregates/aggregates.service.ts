@@ -11,7 +11,7 @@ export class AggregatesService {
   /** 最新星光：查看者已加入群内的活跃投影，按投影时间倒序（ADR-0010） */
   async getFeed(userId: number, page = 1): Promise<PageDto<FeedItemDto>> {
     const mySpaces = await this.prisma.member.findMany({
-      where: { userId, isActive: true },
+      where: { userId, isActive: true, status: 'active' },
       select: { spaceId: true },
     })
     const projections = await this.prisma.projection.findMany({
@@ -33,8 +33,8 @@ export class AggregatesService {
   /** 星轨（ADR-0010）：只统计与查看者有共同群的该作者投影；spaceId 提供时以该群为上下文 */
   async getStarTrail(userId: number, targetId: number, spaceId?: number): Promise<StarTrailDto> {
     const [mySpaces, targetMembers] = await Promise.all([
-      this.prisma.member.findMany({ where: { userId, isActive: true }, select: { spaceId: true } }),
-      this.prisma.member.findMany({ where: { userId: targetId, isActive: true }, select: { spaceId: true } }),
+      this.prisma.member.findMany({ where: { userId, isActive: true, status: 'active' }, select: { spaceId: true } }),
+      this.prisma.member.findMany({ where: { userId: targetId, isActive: true, status: 'active' }, select: { spaceId: true } }),
     ])
     const mySpaceIds = new Set(mySpaces.map((m) => Number(m.spaceId)))
     const sharedSpaceIds = targetMembers
