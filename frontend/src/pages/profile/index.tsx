@@ -89,6 +89,10 @@ export default function Profile() {
             <Text className='entry-label'>📝 我的作品</Text>
             <Text className='entry-arrow'>›</Text>
           </View>
+          <View className='entry' onClick={() => Taro.navigateTo({ url: '/pages/privacy/index' })}>
+            <Text className='entry-label'>🔒 隐私说明</Text>
+            <Text className='entry-arrow'>›</Text>
+          </View>
         </View>
       ) : null}
 

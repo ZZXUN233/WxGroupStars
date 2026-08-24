@@ -1,5 +1,6 @@
 export default defineAppConfig({
   pages: [
+    'pages/splash/index',
     'pages/index/index',
     'pages/profile/index',
     'pages/space/index',
@@ -10,7 +11,8 @@ export default defineAppConfig({
     'pages/create-space/index',
     'pages/drafts/index',
     'pages/edit-profile/index',
-    'pages/webview/index'
+    'pages/webview/index',
+    'pages/privacy/index'
   ],
   window: {
     backgroundTextStyle: 'light',

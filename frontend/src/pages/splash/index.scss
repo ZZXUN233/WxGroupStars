@@ -1,0 +1,134 @@
+/* 覆盖全局 page 白色背景，确保启动页深色底色 */
+page {
+  background: linear-gradient(160deg, #0f0b2e 0%, #1a1145 40%, #2d1b69 100%) !important;
+  height: 100%;
+}
+
+.splash {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #0f0b2e 0%, #1a1145 40%, #2d1b69 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---------- 星空容器 ---------- */
+.starfield {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- 单颗星 ---------- */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- 中心光晕 ---------- */
+.center-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  margin-top: -150px;
+  margin-left: -150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 139, 250, 0.25) 0%, transparent 70%);
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* ---------- 中心大星 ---------- */
+.center-star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  margin-left: -10px;
+  background: #fff;
+  clip-path: polygon(
+    50% 0%, 61% 35%, 98% 35%, 68% 57%,
+    79% 91%, 50% 70%, 21% 91%, 32% 57%,
+    2% 35%, 39% 35%
+  );
+  box-shadow: 0 0 20px rgba(168, 139, 250, 0.8), 0 0 60px rgba(168, 139, 250, 0.4);
+  animation: star-rotate 2s ease-out forwards;
+  transform-origin: center center;
+}
+
+/* ---------- 标题 ---------- */
+.title-wrapper {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: title-in 1.2s ease-out 0.8s forwards;
+}
+
+.title {
+  font-size: 72px;
+  font-weight: 800;
+  letter-spacing: 12px;
+  color: #fff;
+  text-shadow:
+    0 0 20px rgba(168, 139, 250, 0.6),
+    0 0 60px rgba(168, 139, 250, 0.3);
+}
+
+.subtitle {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 20px;
+  letter-spacing: 4px;
+}
+
+/* ---------- 闪烁星星动画 ---------- */
+@keyframes twinkle1 {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+@keyframes twinkle2 {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.2); }
+}
+
+@keyframes twinkle3 {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.4); }
+}
+
+/* 中心大星旋转 + 缩放 */
+@keyframes star-rotate {
+  0% { transform: rotate(0deg) scale(0.5); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: rotate(360deg) scale(1); opacity: 1; }
+}
+
+/* 标题入场 */
+@keyframes title-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 光晕脉动 */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
