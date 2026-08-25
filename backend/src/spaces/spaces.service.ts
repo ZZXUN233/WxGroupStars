@@ -300,7 +300,8 @@ export class SpacesService {
     visible.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
     const liked = await likedProjectionIds(this.prisma, visible.map((p) => p.id), userId)
     const items = visible.map((p) => projectionToDto(p, liked.has(Number(p.id))))
-    return paginate(items, page)
+    const PAGE_SIZE: Record<TimelineSlice, number> = { today: 50, week: 50, month: 100, year: 1000 }
+    return paginate(items, page, PAGE_SIZE[slice])
   }
 
   /** 群内搜索（ADR-0010）：标题 / 正文 / 标签 / 作者昵称 */
